@@ -102,17 +102,31 @@ class Houzez_Property_Feed_Format_Vaultea extends Houzez_Property_Feed_Process {
 			$current_page = 1;
 			$more_properties = true;
 
+			$base_url = $server . 
+				$endpoint['uri'] . '?' . 
+				( isset($endpoint['portalStatus']) ? 'portalStatus=' . implode(",", $endpoint['portalStatus']) : '' ) . 
+				( isset($endpoint['extraQueryString']) ? '&' . trim($endpoint['extraQueryString'], '&') : '' ) . 
+				'&publishedOnPortals=' . $import_settings['portal_id'];
+
 			while ( $more_properties )
 			{
 				++$requests;
 				if ( $requests % $requests_per_chunk ) { sleep($pause_between_requests); }
 
-				$response = wp_remote_get( $server . $endpoint['uri'] . '?' . ( isset($endpoint['portalStatus']) ? 'portalStatus=' . implode(",", $endpoint['portalStatus']) . '&' : '' ) . 'publishedOnPortals=' . $import_settings['portal_id'] . '&pagesize=50&page=' . $current_page, array( 'timeout' => 120, 'headers' => array(
-					'accept' => 'application/json',
-					'Content-Type' => 'application/json',
-					'X-Api-Key' => $import_settings['api_key'],
-					'Authorization' => 'Bearer ' . $import_settings['token'],
-				) ) );
+				$response = wp_remote_get( 
+					$base_url . 
+					'&pagesize=50' . 
+					'&page=' . $current_page, 
+					array( 
+						'timeout' => 120, 
+						'headers' => array(
+							'accept' => 'application/json',
+							'Content-Type' => 'application/json',
+							'X-Api-Key' => $import_settings['api_key'],
+							'Authorization' => 'Bearer ' . $import_settings['token'],
+						) 
+					) 
+				);
 
 				if ( !is_wp_error($response) && is_array( $response ) )
 				{
@@ -134,7 +148,7 @@ class Houzez_Property_Feed_Format_Vaultea extends Houzez_Property_Feed_Process {
 							$more_properties = false;
 						}
 
-						$this->log("Parsing properties from " . $endpoint['uri'] . " on page " . $current_page);
+						$this->log("Parsing properties from " . $base_url . " on page " . $current_page);
 
 						if ( !isset($json['items']) && isset($json['message']) && !empty($json['message']) )
 						{

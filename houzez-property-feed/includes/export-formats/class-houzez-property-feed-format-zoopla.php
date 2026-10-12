@@ -609,6 +609,30 @@ class Houzez_Property_Feed_Format_Zoopla extends Houzez_Property_Feed_Process {
 
         if ( $price_qualifier != '' ) { $request_data['pricing']['price_qualifier'] = $price_qualifier; }
 
+        $internal_area = $this->get_zoopla_area(
+            get_post_meta( $post_id, 'fave_property_size', TRUE ),
+            get_post_meta( $post_id, 'fave_property_size_prefix', TRUE )
+        );
+        $external_area = $this->get_zoopla_area(
+            get_post_meta( $post_id, 'fave_property_land', TRUE ),
+            get_post_meta( $post_id, 'fave_property_land_postfix', TRUE )
+        );
+
+        if ( $internal_area !== false || $external_area !== false )
+        {
+            $request_data['areas'] = array();
+
+            if ( $internal_area !== false )
+            {
+                $request_data['areas']['internal'] = array( 'maximum' => $internal_area );
+            }
+
+            if ( $external_area !== false )
+            {
+                $request_data['areas']['external'] = array( 'maximum' => $external_area );
+            }
+        }
+
         if ( $property_type != '' ) { $request_data['property_type'] = str_replace("land_commercial", "land", $property_type); }
         $request_data['summary_description'] = trim(get_the_excerpt($post_id));
 
@@ -915,6 +939,63 @@ class Houzez_Property_Feed_Format_Zoopla extends Houzez_Property_Feed_Process {
         }
 
         return $response;
+    }
+
+    /**
+     * Convert Houzez's free-text area value and unit to a Zoopla area object.
+     *
+     * Zoopla's real-time feed accepts square feet or square metres. Acres and
+     * hectares are converted to square metres; unrecognised units are omitted
+     * so an invalid enum cannot cause the whole listing to be rejected.
+     *
+     * @param mixed  $value Area value entered in Houzez.
+     * @param string $unit  Free-text Houzez area postfix.
+     * @return array|false
+     */
+    private function get_zoopla_area( $value, $unit )
+    {
+        $value = str_replace( ',', '', trim( (string)$value ) );
+        if ( !is_numeric($value) || (float)$value <= 0 )
+        {
+            return false;
+        }
+
+        $unit = html_entity_decode( trim( (string)$unit ), ENT_QUOTES, 'UTF-8' );
+        $unit = strtolower( str_replace( array( '²', '^2' ), '2', $unit ) );
+        $unit = preg_replace( '/[^a-z0-9]+/', '', $unit );
+
+        $square_feet = array( 'sqft', 'sqfeet', 'squarefoot', 'squarefeet', 'ft2', 'feet2', 'foot2' );
+        $square_metres = array( 'sqm', 'sqmetre', 'sqmetres', 'sqmeter', 'sqmeters', 'squaremetre', 'squaremetres', 'squaremeter', 'squaremeters', 'm2', 'metre2', 'metres2', 'meter2', 'meters2' );
+        $acres = array( 'acre', 'acres' );
+        $hectares = array( 'hectare', 'hectares', 'ha' );
+
+        if ( in_array( $unit, $square_feet, true ) )
+        {
+            $zoopla_unit = 'sq_feet';
+        }
+        elseif ( in_array( $unit, $square_metres, true ) )
+        {
+            $zoopla_unit = 'sq_metres';
+        }
+        elseif ( in_array( $unit, $acres, true ) )
+        {
+            $value = (float)$value * 4046.8564224;
+            $zoopla_unit = 'sq_metres';
+        }
+        elseif ( in_array( $unit, $hectares, true ) )
+        {
+            $value = (float)$value * 10000;
+            $zoopla_unit = 'sq_metres';
+        }
+        else
+        {
+            return false;
+        }
+
+        return array(
+            'value' => (float)$value,
+            'units' => $zoopla_unit,
+        );
     }
 
     private function get_branch_code( $post_id )
