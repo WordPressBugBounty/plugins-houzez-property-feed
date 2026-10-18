@@ -44,7 +44,7 @@ class Houzez_Property_Feed_Format_Agentos extends Houzez_Property_Feed_Process {
 
 		$branches_url = $branches_url . '?' . $fields_string;
 
-		$response = wp_remote_get( $branches_url, array( 'timeout' => 120 ) );
+		$response = wp_safe_remote_get( $branches_url, array( 'timeout' => 120 ) );
 
 		++$requests;
 		if ( $requests >= $requests_per_chunk ) { sleep($sleep_seconds); $requests = 0; }
@@ -83,7 +83,7 @@ class Houzez_Property_Feed_Format_Agentos extends Houzez_Property_Feed_Process {
 
 				$sales_instructions_url = $sales_instructions_url . '?' . $fields_string;
 
-				$response = wp_remote_get( $sales_instructions_url, array( 'timeout' => 120 ) );
+				$response = wp_safe_remote_get( $sales_instructions_url, array( 'timeout' => 120 ) );
 
 				++$requests;
 				if ( $requests >= $requests_per_chunk ) { sleep($sleep_seconds); $requests = 0; }
@@ -117,7 +117,7 @@ class Houzez_Property_Feed_Format_Agentos extends Houzez_Property_Feed_Process {
 
 							$property_url = $property_url . '?' . $fields_string;
 
-							$response = wp_remote_get( $property_url, array( 'timeout' => 120 ) );
+							$response = wp_safe_remote_get( $property_url, array( 'timeout' => 120 ) );
 
 							++$requests;
 							if ( $requests >= $requests_per_chunk ) { sleep($sleep_seconds); $requests = 0; }
@@ -159,7 +159,7 @@ class Houzez_Property_Feed_Format_Agentos extends Houzez_Property_Feed_Process {
 
 							$property_features_url = $property_features_url . '?' . $fields_string;
 
-							$response = wp_remote_get( $property_features_url, array( 'timeout' => 120 ) );
+							$response = wp_safe_remote_get( $property_features_url, array( 'timeout' => 120 ) );
 
 							++$requests;
 							if ( $requests >= $requests_per_chunk ) { sleep($sleep_seconds); $requests = 0; }
@@ -203,7 +203,7 @@ class Houzez_Property_Feed_Format_Agentos extends Houzez_Property_Feed_Process {
 
 							$property_floorplans_url = $property_floorplans_url . '?' . $fields_string;
 
-							$response = wp_remote_get( $property_floorplans_url, array( 'timeout' => 120 ) );
+							$response = wp_safe_remote_get( $property_floorplans_url, array( 'timeout' => 120 ) );
 
 							++$requests;
 							if ( $requests >= $requests_per_chunk ) { sleep($sleep_seconds); $requests = 0; }
@@ -247,7 +247,7 @@ class Houzez_Property_Feed_Format_Agentos extends Houzez_Property_Feed_Process {
 
 							$property_photos_url = $property_photos_url . '?' . $fields_string;
 
-							$response = wp_remote_get( $property_photos_url, array( 'timeout' => 120 ) );
+							$response = wp_safe_remote_get( $property_photos_url, array( 'timeout' => 120 ) );
 
 							++$requests;
 							if ( $requests >= $requests_per_chunk ) { sleep($sleep_seconds); $requests = 0; }
@@ -291,7 +291,7 @@ class Houzez_Property_Feed_Format_Agentos extends Houzez_Property_Feed_Process {
 
 							$property_rooms_url = $property_rooms_url . '?' . $fields_string;
 
-							$response = wp_remote_get( $property_rooms_url, array( 'timeout' => 120 ) );
+							$response = wp_safe_remote_get( $property_rooms_url, array( 'timeout' => 120 ) );
 
 							++$requests;
 							if ( $requests >= $requests_per_chunk ) { sleep($sleep_seconds); $requests = 0; }
@@ -351,7 +351,7 @@ class Houzez_Property_Feed_Format_Agentos extends Houzez_Property_Feed_Process {
 
 				$lettings_instructions_url = $lettings_instructions_url . '?' . $fields_string;
 
-				$response = wp_remote_get( $lettings_instructions_url, array( 'timeout' => 120 ) );
+				$response = wp_safe_remote_get( $lettings_instructions_url, array( 'timeout' => 120 ) );
 
 				++$requests;
 				if ( $requests >= $requests_per_chunk ) { sleep($sleep_seconds); $requests = 0; }
@@ -385,7 +385,7 @@ class Houzez_Property_Feed_Format_Agentos extends Houzez_Property_Feed_Process {
 
 							$property_url = $property_url . '?' . $fields_string;
 
-							$response = wp_remote_get( $property_url, array( 'timeout' => 120 ) );
+							$response = wp_safe_remote_get( $property_url, array( 'timeout' => 120 ) );
 
 							++$requests;
 							if ( $requests >= $requests_per_chunk ) { sleep($sleep_seconds); $requests = 0; }
@@ -424,7 +424,7 @@ class Houzez_Property_Feed_Format_Agentos extends Houzez_Property_Feed_Process {
 
 							$property_url = $property_url . '?' . $fields_string;
 
-							$response = wp_remote_get( $property_url, array( 'timeout' => 120 ) );
+							$response = wp_safe_remote_get( $property_url, array( 'timeout' => 120 ) );
 
 							++$requests;
 							if ( $requests >= $requests_per_chunk ) { sleep($sleep_seconds); $requests = 0; }
@@ -463,7 +463,7 @@ class Houzez_Property_Feed_Format_Agentos extends Houzez_Property_Feed_Process {
 
 							$property_features_url = $property_features_url . '?' . $fields_string;
 
-							$response = wp_remote_get( $property_features_url, array( 'timeout' => 120 ) );
+							$response = wp_safe_remote_get( $property_features_url, array( 'timeout' => 120 ) );
 
 							++$requests;
 							if ( $requests >= $requests_per_chunk ) { sleep($sleep_seconds); $requests = 0; }
@@ -507,7 +507,7 @@ class Houzez_Property_Feed_Format_Agentos extends Houzez_Property_Feed_Process {
 
 							$property_photos_url = $property_photos_url . '?' . $fields_string;
 
-							$response = wp_remote_get( $property_photos_url, array( 'timeout' => 120 ) );
+							$response = wp_safe_remote_get( $property_photos_url, array( 'timeout' => 120 ) );
 
 							++$requests;
 							if ( $requests >= $requests_per_chunk ) { sleep($sleep_seconds); $requests = 0; }

@@ -573,7 +573,7 @@ class Houzez_Property_Feed_Process {
 
 		$request_url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=" . strtolower($country) . "&addressdetails=1&q=" . urlencode(implode(", ", $address));
 
-		$response = wp_remote_get(
+		$response = wp_safe_remote_get(
 			$request_url,
 			array(
 		        'headers' => array(
@@ -643,7 +643,7 @@ class Houzez_Property_Feed_Process {
 				
 				$request_url .= "&key=" . $api_key;
 
-				$response = wp_remote_get($request_url);
+				$response = wp_safe_remote_get($request_url);
 
 				if ( is_array( $response ) && !is_wp_error( $response ) ) 
 				{

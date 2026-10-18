@@ -1228,7 +1228,7 @@ class Houzez_Property_Feed_Format_Street extends Houzez_Property_Feed_Process {
 						)
 						{
 							// This is a URL
-							$url = $property['brochure']['url'];
+							$url = $brochure['url'];
 							$description = ( (isset($brochure['title'])) ? $brochure['title'] : '' );
 						    
 							$explode_url = explode("?", $url);

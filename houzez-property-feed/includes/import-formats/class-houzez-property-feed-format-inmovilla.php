@@ -306,8 +306,8 @@ class Houzez_Property_Feed_Format_Inmovilla extends Houzez_Property_Feed_Process
 	                }
                 }
 
-                update_post_meta( $post_id, 'fave_property_bedrooms', ( ( isset($property->habitaciones) ) ? (string)$property->habitaciones : '' ) );
-	            update_post_meta( $post_id, 'fave_property_bathrooms', ( ( isset($property->bathrooms) ) ? (string)$property->bathrooms : '' ) );
+                update_post_meta( $post_id, 'fave_property_bedrooms', ( isset($property->habitaciones) ? (int)$property->habitaciones : 0 ) + ( isset($property->habdobles) ? (int)$property->habdobles : 0 ) );
+	            update_post_meta( $post_id, 'fave_property_bathrooms', ( isset($property->banyos) ? (int)$property->banyos : 0 ) + ( isset($property->aseos) ? (int)$property->aseos : 0 ) );
 	            update_post_meta( $post_id, 'fave_property_rooms', '' );
 	            update_post_meta( $post_id, 'fave_property_garage', '' ); // need to look at parking
 	            update_post_meta( $post_id, 'fave_property_id', (string)$property->ref );

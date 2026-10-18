@@ -209,7 +209,7 @@ class Houzez_Property_Feed_Format_Reapit_Foundations extends Houzez_Property_Fee
             {
             	$this->ping();
 
-                $response = wp_remote_get(
+                $response = wp_safe_remote_get(
                     'https://platform.reapit.cloud/properties?' . $url_string,
                     array(
                         'headers' => array(
@@ -442,7 +442,7 @@ class Houzez_Property_Feed_Format_Reapit_Foundations extends Houzez_Property_Fee
                 {
                 	$this->ping();
 
-                    $response = wp_remote_get(
+                    $response = wp_safe_remote_get(
                         'https://platform.reapit.cloud/propertyImages?' . $url_string,
                         array(
                             'headers' => array(

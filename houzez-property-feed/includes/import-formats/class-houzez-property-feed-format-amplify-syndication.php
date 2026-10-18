@@ -167,7 +167,7 @@ class Houzez_Property_Feed_Format_Amplify_Syndication extends Houzez_Property_Fe
 
 								$media_url = 'https://query.ampre.ca/odata/Media?$top=1000&$filter=ResourceRecordKey eq %27' . $property['ListingKey'] . '%27 and ResourceName eq %27Property%27';
 
-								$media_response = wp_remote_get( 
+								$media_response = wp_safe_remote_get( 
 									$media_url, 
 									array( 
 										'timeout' => 360, 
@@ -187,7 +187,7 @@ class Houzez_Property_Feed_Format_Amplify_Syndication extends Houzez_Property_Fe
 
 								if ( wp_remote_retrieve_response_code($media_response) !== 200 )
 						        {
-						            $this->log_error( wp_remote_retrieve_response_code($media_response) . ' response received when requesting properties. Error message: ' . wp_remote_retrieve_response_message($response) );
+						            $this->log_error( wp_remote_retrieve_response_code($media_response) . ' response received when requesting properties. Error message: ' . wp_remote_retrieve_response_message($media_response) );
 						            return false;
 						        }
 

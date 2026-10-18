@@ -3,8 +3,8 @@ Contributors: PropertyHive
 Tags: property import, property export, houzez, houzez import property, real estate
 Requires at least: 3.8
 Tested up to: 7.1
-Stable tag: 2.5.50
-Version: 2.5.50
+Stable tag: 2.5.51
+Version: 2.5.51
 Homepage: https://houzezpropertyfeed.com
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
@@ -146,6 +146,14 @@ Updating should work like a charm; as always though, ensure you backup your site
 4. Each time an import runs we'll store in-depth logs so you can see exactly what was imported and when, plus any errors that arose
 
 == Changelog ==
+
+= 2.5.51 - 2026-10-18 =
+* Added nonce and capability checks to AJAX requests
+* Updated usage of wp_remote_get() to wp_safe_remote_get() where applicable
+* Corrected beds and baths in Inmovilla imports
+* Corrected variable used for Street brochure imports
+* Corrected PropertyFinder UAE imports not running
+* Corrected Apimo virtual tours not importing due to inconsistent data types
 
 = 2.5.50 - 2026-07-23 =
 * Added internal and exterior area to Zoopla exports

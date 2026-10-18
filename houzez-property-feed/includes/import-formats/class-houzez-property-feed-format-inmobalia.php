@@ -33,7 +33,7 @@ class Houzez_Property_Feed_Format_Inmobalia extends Houzez_Property_Feed_Process
 
 		$search_url = 'https://api.inmobalia.com/rest/property?page=1&size=999999';
 
-		$response = wp_remote_get( 
+		$response = wp_safe_remote_get( 
 			$search_url, 
 			array(
 				'timeout' => 120,

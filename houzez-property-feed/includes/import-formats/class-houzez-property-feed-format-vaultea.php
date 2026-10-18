@@ -113,7 +113,7 @@ class Houzez_Property_Feed_Format_Vaultea extends Houzez_Property_Feed_Process {
 				++$requests;
 				if ( $requests % $requests_per_chunk ) { sleep($pause_between_requests); }
 
-				$response = wp_remote_get( 
+				$response = wp_safe_remote_get( 
 					$base_url . 
 					'&pagesize=50' . 
 					'&page=' . $current_page, 
@@ -183,7 +183,7 @@ class Houzez_Property_Feed_Format_Vaultea extends Houzez_Property_Feed_Process {
 								++$requests;
 								if ( $requests % $requests_per_chunk ) { sleep($pause_between_requests); }
 
-								$custom_response = wp_remote_get( $server . 'properties/residential/' . $salelease . '/' . $property['id'] . '/custom?pagesize=50', array( 'timeout' => 120, 'headers' => array(
+								$custom_response = wp_safe_remote_get( $server . 'properties/residential/' . $salelease . '/' . $property['id'] . '/custom?pagesize=50', array( 'timeout' => 120, 'headers' => array(
 									'accept' => 'application/json',
 									'Content-Type' => 'application/json',
 									'X-Api-Key' => $import_settings['api_key'],
@@ -210,7 +210,7 @@ class Houzez_Property_Feed_Format_Vaultea extends Houzez_Property_Feed_Process {
 								++$requests;
 								if ( $requests % $requests_per_chunk ) { sleep($pause_between_requests); }
 
-								$rooms_response = wp_remote_get( $server . 'properties/' . $property['id'] . '/' . $salelease . '/' . $life_id . '/rooms', array( 'timeout' => 120, 'headers' => array(
+								$rooms_response = wp_safe_remote_get( $server . 'properties/' . $property['id'] . '/' . $salelease . '/' . $life_id . '/rooms', array( 'timeout' => 120, 'headers' => array(
 									'accept' => 'application/json',
 									'Content-Type' => 'application/json',
 									'X-Api-Key' => $import_settings['api_key'],
@@ -234,7 +234,7 @@ class Houzez_Property_Feed_Format_Vaultea extends Houzez_Property_Feed_Process {
 							++$requests;
 							if ( $requests % $requests_per_chunk ) { sleep($pause_between_requests); }
 
-							$features_response = wp_remote_get( $server . $endpoint['uri'] . '/' . $property['id'] . '', array( 'timeout' => 120, 'headers' => array(
+							$features_response = wp_safe_remote_get( $server . $endpoint['uri'] . '/' . $property['id'] . '', array( 'timeout' => 120, 'headers' => array(
 								'accept' => 'application/json',
 								'Content-Type' => 'application/json',
 								'X-Api-Key' => $import_settings['api_key'],

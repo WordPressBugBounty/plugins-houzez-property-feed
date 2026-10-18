@@ -25,7 +25,7 @@ class Houzez_Property_Feed_Format_Property_Finder_API extends Houzez_Property_Fe
     {
         if ( $test === false )
         {
-            $import_settings = propertyhive_property_import_get_import_settings_from_id( $this->import_id );
+            $import_settings = houzez_property_feed_get_import_settings_from_id( $this->import_id );
         }
         else
         {
@@ -55,30 +55,34 @@ class Houzez_Property_Feed_Format_Property_Finder_API extends Houzez_Property_Fe
             $this->log_error( 'Failed to request token: ' . $response->get_error_message() );
             return false;
         }
+
+        if ( wp_remote_retrieve_response_code($response) !== 200 )
+        {
+            $this->log_error( wp_remote_retrieve_response_code($response) . ' response received when requesting token. Error message: ' . wp_remote_retrieve_response_message($response) );
+            return false;
+        }
+
+        $body = json_decode($response['body'], TRUE);
+
+        if ( $body === false )
+        {
+            $this->log_error( 'Failed to decode token request body: ' . $response['body'] );
+            return false;
+        }
         else
         {
-            $body = json_decode($response['body'], TRUE);
-
-            if ( $body === false )
+            if ( isset($body['accessToken']) )
             {
-                $this->log_error( 'Failed to decode token request body: ' . $response['body'] );
-                return false;
+                $token = $body['accessToken'];
+
+                $this->log( 'Successfully obtained Property Finder access token' );
+
+                return $token;
             }
             else
             {
-                if ( isset($body['accessToken']) )
-                {
-                    $token = $body['accessToken'];
-
-                    $this->log("Got token " . $token );
-
-                    return $token;
-                }
-                else
-                {
-                    $this->log_error( 'Failed to get accessToken part of response body: ' . $response['body'] );
-                    return false;
-                }
+                $this->log_error( 'Failed to get accessToken part of response body: ' . $response['body'] );
+                return false;
             }
         }
     }
@@ -90,7 +94,6 @@ class Houzez_Property_Feed_Format_Property_Finder_API extends Houzez_Property_Fe
 		if ( $test === false )
 		{
 			$import_settings = houzez_property_feed_get_import_settings_from_id( $this->import_id );
-			$test = true;
 		}
 		else
 		{
@@ -109,15 +112,42 @@ class Houzez_Property_Feed_Format_Property_Finder_API extends Houzez_Property_Fe
         $current_page = 1;
         $more_properties = true;
 
+        $pro_active = apply_filters( 'houzez_property_feed_pro_active', false );
+
+        $limit = apply_filters( "houzez_property_feed_property_limit", 25 );
+        if ( $limit !== false )
+        {
+        
+        }
+        else
+        {
+            // using pro, but check for limit setting
+            if ( 
+                $pro_active === true &&
+                isset($import_settings['limit']) && 
+                !empty((int)$import_settings['limit']) && 
+                is_numeric($import_settings['limit'])
+            )
+            {
+                $limit = (int)$import_settings['limit'];
+            }
+        }
+
         while ( $more_properties )
         {
+        	if ( $current_page > 1000 )
+        	{
+        		$this->log_error( 'We somehow got to 1000 pages. Something probably went wrong so stopping import' );
+                return false;
+        	}
+
             $response = wp_remote_request(
-                'https://atlas.propertyfinder.com/v1/listings',
+                'https://atlas.propertyfinder.com/v1/listings?page=' . $current_page,
                 array(
                     'method' => 'GET',
                     'timeout' => 60,
                     'headers' => array(
-                        'Authorization' => 'Bearer ' . $import_settings['api_key']
+                        'Authorization' => 'Bearer ' . $token
                     )
                 )
             );
@@ -125,9 +155,14 @@ class Houzez_Property_Feed_Format_Property_Finder_API extends Houzez_Property_Fe
             if ( is_wp_error( $response ) )
             {
                 $this->log_error( 'Response: ' . $response->get_error_message() );
-
                 return false;
             }
+
+            if ( wp_remote_retrieve_response_code($response) !== 200 )
+	        {
+	            $this->log_error( wp_remote_retrieve_response_code($response) . ' response received when requesting properties. Error message: ' . wp_remote_retrieve_response_message($response) );
+	            return false;
+	        }
 
             $json = json_decode( $response['body'], TRUE );
 
@@ -155,7 +190,7 @@ class Houzez_Property_Feed_Format_Property_Finder_API extends Houzez_Property_Fe
             $total_pages = '';
             if ( isset($json['pagination']['totalPages']) )
             {
-                if ( $current_page == $json['pagination']['totalPages'] )
+                if ( $current_page >= $json['pagination']['totalPages'] )
                 {
                     $more_properties = false;
                 }
@@ -391,49 +426,33 @@ class Houzez_Property_Feed_Format_Property_Finder_API extends Houzez_Property_Fe
 	                }
 	                elseif ( $department == 'residential-lettings' )
 	                {
-	                	$rent = '';
-	                    $rent_frequency = 'pcm';
+	                	$price_type = isset($property['price']['type'])
+						    ? $property['price']['type']
+						    : '';
 
-	                    if ( isset($property['price']['daily']) && !empty($property['price']['daily']) )
-	                    {
-	                        $rent = preg_replace("/[^0-9.]/", '', $property['price']['daily']);
-	                        if ( !empty($rent) )
-	                        {
-	                            $rent = round($rent);
-	                            $rent_frequency = 'pd';
-	                        }
-	                    }
-	                    elseif ( isset($property['price']['monthly']) && !empty($property['price']['monthly']) )
-	                    {
-	                        $rent = preg_replace("/[^0-9.]/", '', $property['price']['monthly']);
-	                        if ( !empty($rent) )
-	                        {
-	                            $rent = round($rent);
-	                            $rent_frequency = 'pcm';
-	                        }
-	                    }
-	                    elseif ( isset($property['price']['weekly']) && !empty($property['price']['weekly']) )
-	                    {
-	                        $rent = preg_replace("/[^0-9.]/", '', $property['price']['weekly']);
-	                        if ( !empty($rent) )
-	                        {
-	                            $rent = round($rent);
-	                            $rent_frequency = 'pw';
-	                        }
-	                    }
-	                    elseif ( isset($property['price']['yearly']) && !empty($property['price']['yearly']) )
-	                    {
-	                        $rent = preg_replace("/[^0-9.]/", '', $property['price']['yearly']);
-	                        if ( !empty($rent) )
-	                        {
-	                            $rent = round($rent);
-	                            $rent_frequency = 'pa';
-	                        }
-	                    }
+						$price_amount = isset($property['price']['amounts'][$price_type])
+						    ? $property['price']['amounts'][$price_type]
+						    : '';
 
-	                	update_post_meta( $post_id, 'fave_property_price_prefix', '' );
-	                    update_post_meta( $post_id, 'fave_property_price', $price );
-	                    update_post_meta( $post_id, 'fave_property_price_postfix', $rent_frequency );
+						$price_postfixes = array(
+						    'sale'    => '',
+						    'daily'   => 'pd',
+						    'weekly'  => 'pw',
+						    'monthly' => 'pcm',
+						    'yearly'  => 'pa',
+						);
+
+						$price_postfix = isset($price_postfixes[$price_type])
+						    ? $price_postfixes[$price_type]
+						    : '';
+
+						if ($price_amount !== '' && is_numeric($price_amount)) {
+						    $price_amount = round((float) $price_amount);
+						}
+
+						update_post_meta($post_id, 'fave_property_price_prefix', '');
+						update_post_meta($post_id, 'fave_property_price', $price_amount);
+						update_post_meta($post_id, 'fave_property_price_postfix', $price_postfix);
 	                }
                 }
 
@@ -442,17 +461,8 @@ class Houzez_Property_Feed_Format_Property_Finder_API extends Houzez_Property_Fe
 	            update_post_meta( $post_id, 'fave_property_rooms', '' );
 	            update_post_meta( $post_id, 'fave_property_id', ( ( isset($property['reference']) ) ? $property['reference'] : '' ) );
 
-	            $address_number = '';
-				$address_property_finder_api = isset($property['address']['line_1']) ? $property['address']['line_1'] : '';
-				$address1_explode = explode(' ', $address_property_finder_api);
-				if ( !empty($address1_explode) && is_numeric($address1_explode[0]) )
-				{
-					$address_number = array_shift($address1_explode);
-					$address_property_finder_api = implode(' ', $address1_explode);
-				}
-
 	            $address_parts = array();
-	            update_post_meta( $post_id, 'fave_property_map', '0' );
+	            update_post_meta( $post_id, 'fave_property_map', '1' );
 	            update_post_meta( $post_id, 'fave_property_map_address', implode(", ", $address_parts) );
 	            $lat = '';
 	            $lng = '';
@@ -469,7 +479,7 @@ class Houzez_Property_Feed_Format_Property_Finder_API extends Houzez_Property_Fe
 	            update_post_meta( $post_id, 'fave_property_location', $lat . "," . $lng . ",14" );
 	            update_post_meta( $post_id, 'fave_property_country', 'AE' );
 	            
-	            $address_parts = array();
+	            //$address_parts = array();
 	            update_post_meta( $post_id, 'fave_property_address', implode(", ", $address_parts) );
 	            update_post_meta( $post_id, 'fave_property_zip', '' );
 
@@ -499,14 +509,14 @@ class Houzez_Property_Feed_Format_Property_Finder_API extends Houzez_Property_Fe
 							}
 						}
 					}
-					if ( !empty($feature_term_ids) )
-					{
-						wp_set_object_terms( $post_id, $feature_term_ids, "property_feature" );
-					}
-					else
-					{
-						wp_delete_object_term_relationships( $post_id, "property_feature" );
-					}
+				}
+				if ( !empty($feature_term_ids) )
+				{
+					wp_set_object_terms( $post_id, $feature_term_ids, "property_feature" );
+				}
+				else
+				{
+					wp_delete_object_term_relationships( $post_id, "property_feature" );
 				}
 
 				$mappings = ( isset($import_settings['mappings']) && is_array($import_settings['mappings']) && !empty($import_settings['mappings']) ) ? $import_settings['mappings'] : array();
@@ -554,16 +564,14 @@ class Houzez_Property_Feed_Format_Property_Finder_API extends Houzez_Property_Fe
 
 				// Images
 				$default_size = 'original';
-                if ( get_option('propertyhive_images_stored_as', '') == 'urls' )
-                {
-                    $default_size = 'large';
-                }
 
 				if ( 
 					apply_filters('houzez_property_feed_images_stored_as_urls', false, $post_id, $property, $this->import_id) === true ||
 					apply_filters('houzez_property_feed_images_stored_as_urls_property_finder_api', false, $post_id, $property, $this->import_id) === true
 				)
 				{
+					//$default_size = 'large';
+
 					$urls = array();
 
 					if (isset($property['media']['images']) && !empty($property['media']['images']))
@@ -672,7 +680,8 @@ class Houzez_Property_Feed_Format_Property_Finder_API extends Houzez_Property_Fe
 								// This is a URL
 								$description = '';
 							    
-								$filename = basename( $url );
+								$explode_url = explode("?", $url);
+								$filename = basename( $explode_url[0] );
 
 								// Check, based on the URL, whether we have previously imported this media
 								$imported_previously = false;
@@ -839,7 +848,7 @@ class Houzez_Property_Feed_Format_Property_Finder_API extends Houzez_Property_Fe
 							}
 							else
 							{
-								$iframe = '<iframe src="' . $url . '" style="border:0; height:360px; width:640px; max-width:100%" allowFullScreen="true"></iframe>';
+								$iframe = '<iframe src="' . esc_url($url) . '" style="border:0; height:360px; width:640px; max-width:100%" allowFullScreen="true"></iframe>';
 								update_post_meta( $post_id, 'fave_virtual_tour', $iframe );
 							}
 						}

@@ -162,7 +162,7 @@ class Houzez_Property_Feed_Format_Dezrez_Rezi extends Houzez_Property_Feed_Proce
 							
 							$this->ping();
 							
-							$response = wp_remote_get( 
+							$response = wp_safe_remote_get( 
 								$property_url, 
 								array(
 									'timeout' => 120,

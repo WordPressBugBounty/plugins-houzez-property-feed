@@ -31,7 +31,7 @@ class Houzez_Property_Feed_Format_Propconnect extends Houzez_Property_Feed_Proce
 
 		$url = 'https://crm.propconnect.ae/api/v2/export/JSON/' . $import_settings['token'] . '/generic';
 
-		$response = wp_remote_get( 
+		$response = wp_safe_remote_get( 
 			$url,
 			array(
 				'timeout' => 360 

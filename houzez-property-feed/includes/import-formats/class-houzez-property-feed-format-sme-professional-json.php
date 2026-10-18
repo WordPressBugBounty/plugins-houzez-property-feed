@@ -40,7 +40,7 @@ class Houzez_Property_Feed_Format_SME_Professional_JSON extends Houzez_Property_
 			// Lettings properties
 			if ( in_array('residential-lettings', $departments) )
 			{
-				$response = wp_remote_get(
+				$response = wp_safe_remote_get(
 					'https://home.smelogin.co.uk/CustomerData/' . $import_settings['company_id'] . '/GeneratedDocuments/Marketing/waas/all_marketed_properties' . $branch_id . '.json',
 					array( 'timeout' => 120 )
 				);
@@ -120,7 +120,7 @@ class Houzez_Property_Feed_Format_SME_Professional_JSON extends Houzez_Property_
 			// Sales properties
 			if ( in_array('residential-sales', $departments) )
 			{
-				$response = wp_remote_get(
+				$response = wp_safe_remote_get(
 					'https://home.smelogin.co.uk/CustomerData/' . $import_settings['company_id'] . '/GeneratedDocuments/Marketing/waas_s/all_marketed_properties' . $branch_id . '.json',
 					array( 'timeout' => 120 )
 				);

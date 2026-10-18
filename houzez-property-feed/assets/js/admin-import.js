@@ -239,8 +239,9 @@ jQuery(document).ready(function()
 		var parentTd = jQuery('#import_settings_' + format);
 
 		var data = {
-			'action': 'houzez_property_feed_test_property_import_details',
-			'format': format
+			action: 'houzez_property_feed_test_property_import_details',
+			format: format,
+			ajax_nonce: hpf_admin_object.ajax_nonce
 		};
 
 		// Find all input fields within that 'td'

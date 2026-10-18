@@ -158,7 +158,7 @@ class Houzez_Property_Feed_License {
 	        $url .= 'imports=' . $import_formats . '&';
 	        $url .= 'exports=' . $export_formats;
 
-	        $response = wp_remote_get( $url );
+	        $response = wp_safe_remote_get( $url );
 
 	        if ( is_wp_error($response) ) {
 	            $last_error_message = __( 'Failed to request license status', 'houzezpropertyfeed' ) . ': ' . $response->get_error_message();
@@ -252,7 +252,7 @@ class Houzez_Property_Feed_License {
 	        $url .= 'version=' . HOUZEZ_PROPERTY_FEED_PRO_VERSION . '&';
 	        $url .= 'api_key=' . $license_key;
 
-	        $response = wp_remote_get( $url );
+	        $response = wp_safe_remote_get( $url );
 
 	        if ( is_wp_error($response) ) {
 	            $last_error = __( 'Failed to request license activation', 'houzezpropertyfeed' ) . ': ' . $response->get_error_message();
@@ -314,7 +314,7 @@ class Houzez_Property_Feed_License {
 	        $url .= 'version=' . HOUZEZ_PROPERTY_FEED_PRO_VERSION . '&';
 	        $url .= 'api_key=' . $license_key;
 
-	        $response = wp_remote_get( $url );
+	        $response = wp_safe_remote_get( $url );
 
 	        if ( is_wp_error($response) ) {
 	            $last_error = __( 'Failed to request license deactivation', 'houzezpropertyfeed' ) . ': ' . $response->get_error_message();

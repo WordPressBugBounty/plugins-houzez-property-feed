@@ -1080,7 +1080,7 @@ class Houzez_Property_Feed_Format_Apimo extends Houzez_Property_Feed_Process {
                     foreach ( $property['medias'] as $media )
                     {
                         if ( 
-                        	isset($media['internet']) && $media['internet'] === "1" &&
+							isset($media['internet']) && (int)$media['internet'] === 1 &&
                         	isset($media['value']) &&
                         	preg_match('~^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/~i', $media['value'])
                         )

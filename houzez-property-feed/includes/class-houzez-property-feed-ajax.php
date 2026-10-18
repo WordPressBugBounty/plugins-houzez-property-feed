@@ -31,6 +31,16 @@ class Houzez_Property_Feed_Ajax {
     {
         header( 'Content-Type: application/json; charset=utf-8' );
 
+        if ( !current_user_can( 'manage_options' ) ) 
+        {
+            $return = array(
+                'success' => false,
+                'error' => __( 'Invalid permissions', 'houzezpropertyfeed' )
+            );
+            echo json_encode($return);
+            die();
+        }
+
         if ( !wp_verify_nonce( sanitize_text_field(wp_unslash($_GET['ajax_nonce'])), "hpf_ajax_nonce" ) ) 
         {
             $return = array(
@@ -99,6 +109,16 @@ class Houzez_Property_Feed_Ajax {
     {
         header( 'Content-Type: application/json; charset=utf-8' );
 
+        if ( !current_user_can( 'manage_options' ) ) 
+        {
+            $return = array(
+                'success' => false,
+                'error' => __( 'Invalid permissions', 'houzezpropertyfeed' )
+            );
+            echo json_encode($return);
+            die();
+        }
+
         if ( !wp_verify_nonce( sanitize_text_field(wp_unslash($_GET['ajax_nonce'])), "hpf_ajax_nonce" ) ) 
         {
             $return = array(
@@ -155,6 +175,12 @@ class Houzez_Property_Feed_Ajax {
 
     public function draw_automatic_imports_table()
     {
+        if ( !current_user_can( 'manage_options' ) ) 
+        {
+            echo 'Invalid permissions';
+            die();
+        }
+
         if ( !wp_verify_nonce( sanitize_text_field(wp_unslash($_GET['ajax_nonce'])), "hpf_ajax_nonce" ) ) 
         {
             echo 'Failed to verify nonce. Please reload the page';
@@ -174,6 +200,16 @@ class Houzez_Property_Feed_Ajax {
     public function get_running_status()
     {
         header( 'Content-Type: application/json; charset=utf-8' );
+
+        if ( !current_user_can( 'manage_options' ) ) 
+        {
+            $return = array(
+                'success' => false,
+                'error' => __( 'Invalid permissions', 'houzezpropertyfeed' )
+            );
+            echo json_encode($return);
+            die();
+        }
 
         if ( !wp_verify_nonce( sanitize_text_field(wp_unslash($_GET['ajax_nonce'])), "hpf_ajax_nonce" ) ) 
         {
@@ -633,14 +669,14 @@ class Houzez_Property_Feed_Ajax {
 
     public function import_import()
     {
+        if ( !current_user_can( 'manage_options' ) ) 
+        {
+            wp_send_json_error('Invalid permissions');
+        }
+
         if ( !wp_verify_nonce( sanitize_text_field(wp_unslash($_POST['ajax_nonce'])), "hpf_ajax_nonce" ) ) 
         {
-            $return = array(
-                'success' => false,
-                'error' => __( 'Invalid nonce provided', 'houzezpropertyfeed' )
-            );
-            echo wp_json_encode($return);
-            die();
+            wp_send_json_error('Invalid nonce provided');
         }
 
         if (
@@ -730,6 +766,26 @@ class Houzez_Property_Feed_Ajax {
     public function test_property_import_details()
     {
         header( 'Content-Type: application/json; charset=utf-8' );
+
+        if ( !current_user_can( 'manage_options' ) ) 
+        {
+            $return = array(
+                'success' => false,
+                'error' => __( 'Invalid permissions', 'houzezpropertyfeed' )
+            );
+            echo json_encode($return);
+            die();
+        }
+
+        if ( !wp_verify_nonce( sanitize_text_field(wp_unslash($_POST['ajax_nonce'])), "hpf_ajax_nonce" ) ) 
+        {
+            $return = array(
+                'success' => false,
+                'error' => __( 'Invalid nonce provided', 'houzezpropertyfeed' )
+            );
+            echo wp_json_encode($return);
+            die();
+        }
 
         $format = isset($_POST['format']) ? sanitize_text_field(wp_unslash($_POST['format'])) : '';
 
