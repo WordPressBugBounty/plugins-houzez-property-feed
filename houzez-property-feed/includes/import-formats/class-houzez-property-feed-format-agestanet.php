@@ -66,7 +66,7 @@ class Houzez_Property_Feed_Format_Agestanet extends Houzez_Property_Feed_Process
 
 		$contents = '';
 
-		$response = wp_remote_get( $import_settings['xml_url'], array( 'timeout' => 360, 'sslverify' => false ) );
+		$response = wp_safe_remote_get( $import_settings['xml_url'], array( 'timeout' => 360, 'sslverify' => false ) );
 
 		if ( is_wp_error( $response ) )
 		{

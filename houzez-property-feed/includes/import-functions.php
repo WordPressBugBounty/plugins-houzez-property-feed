@@ -716,6 +716,15 @@ function hpf_get_import_object_from_format($format, $instance_id, $import_id)
 
             break;
         }
+        case "miogest":
+        {
+            // includes
+            require_once dirname( __FILE__ ) . '/import-formats/class-houzez-property-feed-format-miogest.php';
+
+            $import_object = new Houzez_Property_Feed_Format_Miogest( $instance_id, $import_id );
+
+            break;
+        }
         case "mls_grid":
         {
             // includes
@@ -794,15 +803,6 @@ function hpf_get_import_object_from_format($format, $instance_id, $import_id)
             require_once dirname( __FILE__ ) . '/import-formats/class-houzez-property-feed-format-propstack.php';
 
             $import_object = new Houzez_Property_Feed_Format_Propstack( $instance_id, $import_id );
-
-            break;
-        }
-        case "reapit_foundations":
-        {
-            // includes
-            require_once dirname( __FILE__ ) . '/import-formats/class-houzez-property-feed-format-reapit-foundations.php';
-
-            $import_object = new Houzez_Property_Feed_Format_Reapit_Foundations( $instance_id, $import_id );
 
             break;
         }

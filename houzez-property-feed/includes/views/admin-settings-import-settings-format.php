@@ -16,7 +16,12 @@
 						{
 							echo '<option value="' . $key . '"';
 							echo ( ( isset($import_settings['format']) && $import_settings['format'] == $key ) ? ' selected' : '' );
-							echo '>' . esc_html($format['name']) . '</option>';
+							echo '>' . esc_html($format['name']);
+							if ( isset($format['pro']) && $format['pro'] === true )
+							{
+								echo ' (' . __( 'Included in PRO', 'houzezpropertyfeed' ) . ')';
+							}
+							echo '</option>';
 						}
 					?>
 				</select>
@@ -32,6 +37,15 @@
 ?>
 
 <div id="import_settings_<?php echo esc_attr($key); ?>" class="import-settings-format" style="display:none">
+
+<?php
+	if ( isset($format['pro']) && $format['pro'] === true )
+	{
+		echo 'Support for this format is only available with a <a href="https://houzezpropertyfeed.com/pricing" target="_blank">PRO subscription</a>.';
+		echo '</div>';
+		continue;
+	}
+?>
 
 <h3><?php echo esc_html($format['name']) . ' ' . __( 'Settings', 'houzezpropertyfeed' ); ?></h3>
 

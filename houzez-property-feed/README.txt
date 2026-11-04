@@ -3,8 +3,8 @@ Contributors: PropertyHive
 Tags: property import, property export, houzez, houzez import property, real estate
 Requires at least: 3.8
 Tested up to: 7.1
-Stable tag: 2.5.51
-Version: 2.5.51
+Stable tag: 2.5.53
+Version: 2.5.53
 Homepage: https://houzezpropertyfeed.com
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
@@ -46,6 +46,7 @@ We can import properties from the following estate agency CRMs/formats:
 * Kato
 * Kyero
 * Loop
+* miogest
 * MRI
 * MLS/IDX (assuming XML URL can be provided)
 * MLS Grid
@@ -147,9 +148,16 @@ Updating should work like a charm; as always though, ensure you backup your site
 
 == Changelog ==
 
+= 2.5.53 - 2026-11-04 =
+* Added support for importing properties from the miogest format
+* Updated Reapit Foundations so it's not available in free plugin
+
+= 2.5.52 - 2026-10-18 =
+* Updated usage of wp_remote_get() to wp_safe_remote_get() in more places - credit: Alan Karl (AHK Solutions LLC)
+
 = 2.5.51 - 2026-10-18 =
-* Added nonce and capability checks to AJAX requests
-* Updated usage of wp_remote_get() to wp_safe_remote_get() where applicable
+* Added nonce and capability checks to AJAX requests - credit: Alan Karl (AHK Solutions LLC)
+* Updated usage of wp_remote_get() to wp_safe_remote_get() where applicable - credit: Alan Karl (AHK Solutions LLC)
 * Corrected beds and baths in Inmovilla imports
 * Corrected variable used for Street brochure imports
 * Corrected PropertyFinder UAE imports not running
