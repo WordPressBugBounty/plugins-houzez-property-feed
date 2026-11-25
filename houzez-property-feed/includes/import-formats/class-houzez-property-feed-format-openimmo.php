@@ -75,7 +75,13 @@ class Houzez_Property_Feed_Format_OpenImmo extends Houzez_Property_Feed_Process 
 					$zip = new ZipArchive;
 					if ($zip->open($zip_file) === TRUE) 
 					{
-					    $zip->extractTo($local_directory);
+					    if ( !$this->extract_supported_zip_files( $zip, $local_directory, array( 'xml' ) ) )
+						{
+							$this->log_error( 'Failed to extract ZIP file contents' );
+						    $zip->close();
+						    return false;
+						}
+
 					    $zip->close();
 					    sleep(1); // We sleep to ensure each XML has a different modified time in the same order
 

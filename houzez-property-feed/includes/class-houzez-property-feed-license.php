@@ -53,6 +53,12 @@ class Houzez_Property_Feed_License {
             return;
         }
 
+        if ( !current_user_can( 'manage_options' ) )
+        {
+            wp_redirect( admin_url( 'admin.php?page=' . ( isset($_GET['page']) ? sanitize_text_field(wp_unslash($_GET['page'])) : 'houzez-property-feed-import' ) . '&tab=license&hpferrormessage=' . base64_encode(urlencode( __( 'You do not have permission to perform this action.', 'houzezpropertyfeed' ) ) ) ) );
+            die();
+        }
+
         if ( !isset($_POST['_wpnonce']) || ( isset($_POST['_wpnonce']) && !wp_verify_nonce( sanitize_text_field(wp_unslash($_POST['_wpnonce'])), 'save-license-key' ) ) ) 
         {
             die( __( "Failed security check", 'houzezpropertyfeed' ) );

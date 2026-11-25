@@ -3724,6 +3724,78 @@ function houzez_property_feed_get_export_formats()
             'help_url' => 'https://houzezpropertyfeed.com/documentation/managing-exports/formats/facebook/',
             'warnings' => array_filter( array( $simplexml_warning ) ),
         ) ),
+        'fotocasa' => apply_filters( 'houzez_property_feed_export_format_options_fotocasa', array(
+            'name' => __( 'Fotocasa', 'houzezpropertyfeed' ),
+            'method' => 'realtime', // cron / realtime / url
+            'fields' => array(
+                array(
+                    'id' => 'api_key',
+                    'label' => __( 'API Key', 'houzezpropertyfeed' ),
+                    'type' => 'text',
+                    'tooltip' => __( 'Enter the API key from Fotocasa Pro > Your profile > Content import. Fotocasa must enable the CRM connection first.', 'houzezpropertyfeed' ),
+                ),
+                array(
+                    'id' => 'contact_email',
+                    'label' => __( 'Contact Email', 'houzezpropertyfeed' ),
+                    'type' => 'text',
+                    'tooltip' => __( 'Optional. Leave both contact fields empty to use the main agency contact details configured in Fotocasa.', 'houzezpropertyfeed' ),
+                ),
+                array(
+                    'id' => 'contact_phone',
+                    'label' => __( 'Contact Telephone Number', 'houzezpropertyfeed' ),
+                    'type' => 'text',
+                ),
+                array(
+                    'id' => 'address_visibility',
+                    'label' => __( 'Address Visibility', 'houzezpropertyfeed' ),
+                    'type' => 'select',
+                    'default' => '2',
+                    'tooltip' => __( 'Choose whether Fotocasa displays the exact address, the street only, or the surrounding area.', 'houzezpropertyfeed' ),
+                    'options' => array(
+                        '1' => __( 'Exact', 'houzezpropertyfeed' ),
+                        '2' => __( 'Street', 'houzezpropertyfeed' ),
+                        '3' => __( 'Zone', 'houzezpropertyfeed' ),
+                    ),
+                ),
+                array(
+                    'id' => 'only_send_if_different',
+                    'label' => __( 'Only Send When Data Has Changed', 'houzezpropertyfeed' ),
+                    'type' => 'checkbox',
+                    'tooltip' => __( 'To reduce the number of requests tick this option to ensure we only send data if it\'s different to the last time we sent it', 'houzezpropertyfeed' )
+                ),
+            ),
+            'taxonomy_values' => array(
+                'property_type' => array(
+                    '1:2' => 'Triplex',
+                    '1:3' => 'Duplex',
+                    '1:5' => 'Penthouse',
+                    '1:6' => 'Studio',
+                    '1:7' => 'Loft',
+                    '1:9' => 'Flat',
+                    '1:10' => 'Apartment',
+                    '1:11' => 'Ground floor flat',
+                    '2:13' => 'House',
+                    '2:17' => 'Terraced house',
+                    '2:19' => 'Paired house',
+                    '2:20' => 'Chalet',
+                    '2:24' => 'Rustic house',
+                    '2:27' => 'Bungalow',
+                    '5:48' => 'Residential building',
+                    '5:49' => 'Other building',
+                    '5:50' => 'Mixed residential building',
+                    '5:51' => 'Office building',
+                    '5:72' => 'Hotel',
+                    '6:56' => 'Residential land',
+                    '6:60' => 'Industrial land',
+                    '6:91' => 'Rustic land',
+                    '8:68' => 'Motorcycle garage',
+                    '8:69' => 'Double garage',
+                    '8:70' => 'Individual garage',
+                ),
+            ),
+            'help_url' => 'https://www.fotocasa.pro/u/api-documentation',
+            'warnings' => array(),
+        ) ),
         'idealista' => apply_filters( 'houzez_property_feed_export_format_options_idealista', array(
             'name' => __( 'Idealista', 'houzezpropertyfeed' ),
             'method' => 'cron', // cron / realtime / url

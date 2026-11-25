@@ -30,19 +30,6 @@ class Houzez_Property_Feed_Format_Alto extends Houzez_Property_Feed_Process {
 	private function get_token($url, $filename) 
 	{
 		$import_settings = houzez_property_feed_get_import_settings_from_id( $this->import_id );
-
-		$wp_upload_dir = wp_upload_dir();
-		$uploads_dir = $wp_upload_dir['basedir'] . '/houzez_property_feed_import/';
-
-		// Overwriting the response headers from each attempt in this file (for information only)
-		$file = $uploads_dir . "headers-" . $this->import_id . ".txt";
-
-		if ( file_exists($file) )
-		{
-			unlink($file);
-		}
-
-		$fh = fopen($file, "w");
 		
 		// Start curl session
 		$ch = curl_init($url);
@@ -53,68 +40,64 @@ class Houzez_Property_Feed_Format_Alto extends Houzez_Property_Feed_Process {
 		// Show headers in returned data but not body as we are only using this curl session to aquire and store the token
 		curl_setopt($ch, CURLOPT_HEADER, 1); 
 		curl_setopt($ch, CURLOPT_NOBODY, 1); 
-		// write the output (returned headers) to file
-		curl_setopt($ch, CURLOPT_FILE, $fh);
-		// execute curl session
-		curl_exec($ch);
-		// Log curl request info in case of error
+		// Return the response headers into memory.
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		$response_headers = curl_exec($ch);
 		$token_request_info = curl_getinfo($ch);
-		// close curl session
-		curl_close($ch); 
 
-		// close headers.txt file
-		fclose($fh);
+		curl_close($ch);
 
-		// read each line of the returned headers back into an array
-		$headers = file($uploads_dir . 'headers-' . $this->import_id . '.txt', FILE_SKIP_EMPTY_LINES);
+		if ( $response_headers === false )
+		{
+		    $this->log_error( 'Unable to request an Alto API token' );
+		    return;
+		}
+
+		$headers = preg_split( '/\r\n|\r|\n/', $response_headers );
 		
 		$token = '';
 
 		// For each line of the array explode the line by ':' (Seperating the header name from its value)
 		foreach ( $headers as $headerLine )
 		{
-			$line = explode(':', $headerLine);
-			$header = $line[0];
+			$line = explode( ':', $headerLine, 2 );
+
+			if ( count( $line ) !== 2 )
+			{
+			    continue;
+			}
+
+			$header = trim( $line[0] );
 			
 			// If the request is successful and we are returned a token
 			if ( strtolower($header) == "token" ) 
 			{
 				$value = trim($line[1]);
 
-				// Save token start and expire time (roughly)
-				$tokenStart = time(); 
-				$tokenExpire = $tokenStart + (60 * 60);
-
 				$token = base64_encode($value);
-				$this->log("Got new token: " . $token);
+				$this->log("Got new token");
 
-				// For now write this new token, its start and expiry datetime into a .txt (appending not overwriting - this is for reference in case you lose your session data)
-				$file = $uploads_dir . "tokens-" . $this->import_id . ".txt";
-				$fh = fopen($file, "a+");
-				// Write the line in
-				$newLine = "" . $token . "," . date('Y-m-d H:i:s', $tokenStart) . "," . date('Y-m-d H:i:s', $tokenExpire) . "" . "\n";
-				fwrite($fh, $newLine);
-				// Close file
-				fclose($fh);
+				set_transient(
+				    'houzez_property_feed_alto_token_' . $this->import_id,
+				    $token,
+				    HOUR_IN_SECONDS
+				);
 			}
 		}
 
 		// If we have been given a token request XML from the API authenticating using the token
 		if ( !empty($token) ) 
 		{
-			$this->connect($url, $filename);
-
-			unlink($uploads_dir . 'headers-' . $this->import_id . '.txt');
+			$this->connect($url, $filename, true);
 		}
 		else
 		{
 			// If we have not been given a new token its because:
-			// a) we already have a live token which has not expired yet (check the tokens.txt file)
+			// a) we already have a live token which has not expired yet
 			// or
 			// b) there was an error.
 			// Write this to logs for reference
-			//log_error("There is still an active Token, you must wait for this token to expire before a new one can be requested!");
-			$this->log("Response when requesting token: " . file_get_contents($uploads_dir . 'headers-' . $this->import_id . '.txt'));
+			$this->log("Response when requesting token: " . (int)$token_request_info['http_code']);
 
 			if ( isset($token_request_info['http_code']) && $token_request_info['http_code'] === 401 )
 			{
@@ -124,7 +107,7 @@ class Houzez_Property_Feed_Format_Alto extends Houzez_Property_Feed_Process {
 	}
 
 	// Function to connect to the API authenticating ourself with the token we have been given
-	private function connect($url, $filename) 
+	private function connect($url, $filename, $token_refreshed = false) 
 	{
 		$token = '';
 
@@ -137,30 +120,11 @@ class Houzez_Property_Feed_Format_Alto extends Houzez_Property_Feed_Process {
 			$wp_upload_dir = wp_upload_dir();
 			$uploads_dir = $wp_upload_dir['basedir'] . '/houzez_property_feed_import/';
 
-			// get latest token
-			$file = $uploads_dir . "tokens-" . $this->import_id . ".txt";
-			if ( file_exists($file) )
+			$token = get_transient('houzez_property_feed_alto_token_' . $this->import_id);
+
+			if ( $token === false )
 			{
-				$tokenRows = file($file, FILE_SKIP_EMPTY_LINES);
-				$numTokens = count($tokenRows);
-
-				$timeNowSecs = time();
-
-				foreach ($tokenRows as $tokenRow) 
-				{
-					$tokenRow = explode(",", $tokenRow);
-					$tokenValue = $tokenRow[0];
-					$tokenStart = $tokenRow[1];
-					$tokenStartSecs = strtotime($tokenStart);
-					$tokenExpiry = $tokenRow[2];
-					$tokenExpirySecs = strtotime($tokenExpiry);
-					//echo "Checking " . $timeNowSecs . " against start " . $tokenStartSecs . " and end " . $tokenExpirySecs . "\n";
-					if ( $timeNowSecs >= $tokenStartSecs && $timeNowSecs <= $tokenExpirySecs )
-					{
-						// We have a token that is currently valid
-						$token = $tokenValue;
-					}
-				}
+			    $token = '';
 			}
 		}
 
@@ -191,10 +155,22 @@ class Houzez_Property_Feed_Format_Alto extends Houzez_Property_Feed_Process {
 			// Store the curl session info/returned headers into the $info array
 			$info = curl_getinfo($ch);
 
+			// Close the curl session
+			curl_close($ch);
+			// Close the open file handle
+			fclose($fh);
+
 			// Check if we have been authorised or not
-			if ( $info['http_code'] == '401' ) 
+			if ( (int)$info['http_code'] === 401 )
 			{
-				$this->get_token($url, $filename);
+			    if ( $token_refreshed )
+			    {
+			        $this->log_error('Alto authentication failed after obtaining a new token');
+
+			        return;
+			    }
+
+			    $this->get_token($url, $filename);
 			}
 			elseif ( $info['http_code'] == '200' )
 			{
@@ -203,18 +179,18 @@ class Houzez_Property_Feed_Format_Alto extends Houzez_Property_Feed_Process {
 			else
 			{
 				$this->log("Got HTTP code: " . $info['http_code'] . " when making request to " . $url);
-			}
-			
-			// Close the curl session
-			curl_close($ch);
-			// Close the open file handle
-			fclose($fh);
-			
+			}			
 		}
 		else
 		{
-			// Run the getToken function above if we are not authenticated
-			$this->get_token($url, $filename);
+			if ( $token_refreshed )
+		    {
+		        $this->log_error('Alto API token is unavailable after authentication');
+
+		        return;
+		    }
+
+		    $this->get_token($url, $filename);
 		}
 	}
 

@@ -19,8 +19,6 @@ class Houzez_Property_Feed_Format_Inmobalia extends Houzez_Property_Feed_Process
 
 	    	$this->log("Executed manually by " . ( ( isset($current_user->display_name) ) ? $current_user->display_name : '' ), '', 0, '', false );
 	    }
-
-	    if ( !defined('ALLOW_UNFILTERED_UPLOADS') ) { define( 'ALLOW_UNFILTERED_UPLOADS', true ); }
 	}
 
 	public function parse()
@@ -742,7 +740,18 @@ class Houzez_Property_Feed_Format_Inmobalia extends Houzez_Property_Feed_Process
 								$url = $image['url'];
 								$description = '';
 							    
-								$filename = basename( $url );
+								$path = wp_parse_url( $url, PHP_URL_PATH );
+
+								$filename = is_string( $path )
+								    ? pathinfo( basename( $path ), PATHINFO_FILENAME )
+								    : '';
+
+								$filename = sanitize_file_name( $filename );
+
+								if ( $filename === '' )
+								{
+								    $filename = 'media-' . md5( $url );
+								}
 
 								// Check, based on the URL, whether we have previously imported this media
 								$imported_previously = false;
@@ -793,11 +802,6 @@ class Houzez_Property_Feed_Format_Inmobalia extends Houzez_Property_Feed_Process
 										
 										$tmp = download_url( $url );
 
-									    $file_array = array(
-									        'name' => $filename,
-									        'tmp_name' => $tmp
-									    );
-
 									    // Check for download errors
 									    if ( is_wp_error( $tmp ) ) 
 									    {
@@ -805,29 +809,58 @@ class Houzez_Property_Feed_Format_Inmobalia extends Houzez_Property_Feed_Process
 									    }
 									    else
 									    {
-										    $id = media_handle_sideload( $file_array, $post_id, $description );
+									    	$extensions = array(
+										        'image/jpeg' => 'jpg',
+										        'image/bmp'  => 'bmp',
+										        'image/png'  => 'png',
+										        'image/gif'  => 'gif',
+										        'image/webp' => 'webp',
+										        'image/avif' => 'avif',
+										    );
 
-										    // Check for handle sideload errors.
-										    if ( is_wp_error( $id ) ) 
+										    $mime_type = wp_get_image_mime( $tmp );
+
+										    if ( ! isset( $extensions[$mime_type] ) )
 										    {
-										        @unlink( $file_array['tmp_name'] );
-										        
-										        $this->log_error( 'ERROR: An error occurred whilst importing ' . $url . '. The error was as follows: ' . $id->get_error_message(), $property['id'], $post_id );
+										        @unlink( $tmp );
+
+										        $this->log_error(
+										            'Downloaded file is not a supported image',
+										            $property['id'],
+										            $post_id
+										        );
 										    }
 										    else
 										    {
-										    	$media_ids[] = $id;
+										    	$file_array = array(
+											        'name' => $filename . '.' . $extensions[$mime_type],
+											        'tmp_name' => $tmp
+											    );
 
-										    	update_post_meta( $id, '_imported_url', $url);
+											    $id = media_handle_sideload( $file_array, $post_id, $description );
 
-										    	if ( $image_i == 0 ) set_post_thumbnail( $post_id, $id );
+											    // Check for handle sideload errors.
+											    if ( is_wp_error( $id ) ) 
+											    {
+											        @unlink( $file_array['tmp_name'] );
+											        
+											        $this->log_error( 'ERROR: An error occurred whilst importing ' . $url . '. The error was as follows: ' . $id->get_error_message(), $property['id'], $post_id );
+											    }
+											    else
+											    {
+											    	$media_ids[] = $id;
 
-										    	++$new;
+											    	update_post_meta( $id, '_imported_url', $url);
 
-										    	++$image_i;
+											    	if ( $image_i == 0 ) set_post_thumbnail( $post_id, $id );
 
-										    	update_option( 'houzez_property_feed_property_image_media_ids_' . $this->import_id, $post_id . '|' . implode(",", $media_ids), false );
-										    }
+											    	++$new;
+
+											    	++$image_i;
+
+											    	update_option( 'houzez_property_feed_property_image_media_ids_' . $this->import_id, $post_id . '|' . implode(",", $media_ids), false );
+											    }
+											}
 										}
 									}
 									else

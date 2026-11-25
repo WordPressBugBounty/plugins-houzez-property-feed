@@ -2,23 +2,44 @@
 
 include('../../../wp-load.php');
 
+if ( !current_user_can( 'manage_options' ) )
+{
+    wp_die(
+        'You do not have permission to download import files',
+        '',
+        array( 'response' => 403 )
+    );
+}
+
 global $wpdb;
 
 if ( !isset($_GET['import_id']) || ( isset($_GET['import_id']) && empty($_GET['import_id']) ) )
 {
-	die("No import ID passed");
+	wp_die(
+	    'No import ID passed',
+	    '',
+	    array( 'response' => 400 )
+	);
 }
 
 if ( !isset($_GET['file']) || ( isset($_GET['file']) && empty($_GET['file']) ) )
 {
-	die("No file passed");
+	wp_die(
+	    'No file passed',
+	    '',
+	    array( 'response' => 400 )
+	);
 }
 
 $import_settings = houzez_property_feed_get_import_settings_from_id( (int)$_GET['import_id'] );
 
 if ( $import_settings === false )
 {
-	die("Import passed doesn't exist");
+	wp_die(
+	    'Import passed doesn\'t exist',
+	    '',
+	    array( 'response' => 404 )
+	);
 }
 
 switch ( $import_settings['format'] )
@@ -40,7 +61,11 @@ switch ( $import_settings['format'] )
 		// Ensure the file is within the allowed directory
 		if ( strpos($file_path, $allowed_dir) !== 0 || !file_exists($file_path) ) 
 		{
-		    die("Invalid file path.");
+		    wp_die(
+			    'Invalid file path',
+			    '',
+			    array( 'response' => 404 )
+			);
 		}
 
 		header('Content-Disposition: attachment; filename="' . basename($file_name) . '"');
@@ -50,6 +75,10 @@ switch ( $import_settings['format'] )
 	}
 	default:
 	{
-		die('Unknown format: ' . esc_html($import_settings['format']));
+		wp_die(
+		    'Unknown format: ' . esc_html($import_settings['format']),
+		    '',
+		    array( 'response' => 400 )
+		);
 	}
 }

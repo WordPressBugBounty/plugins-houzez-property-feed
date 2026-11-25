@@ -37,7 +37,7 @@ class Houzez_Property_Feed_Format_Blm extends Houzez_Property_Feed_Process {
 		        return false;
 		    }
 
-	        $local_directory = $wp_upload_dir['basedir'] . '/houzez_property_feed_import/' . $import_id . '/';
+	        $local_directory = $wp_upload_dir['basedir'] . '/houzez_property_feed_import/' . $this->import_id . '/';
 
 			$blm_file = $local_directory . 'blm_properties.blm';
 
@@ -90,13 +90,19 @@ class Houzez_Property_Feed_Format_Blm extends Houzez_Property_Feed_Process {
 							return false;
 						}
 
-						$this->log_error( 'Extracting ZIP file contents' );
+						$this->log( 'Extracting ZIP file contents' );
 
 						// Unzip local zip file, then remove it
 						$zip = new ZipArchive;
 						if ($zip->open($zip_file) === TRUE)
 						{
-							$zip->extractTo($local_directory);
+							if ( !$this->extract_supported_zip_files( $zip, $local_directory, array( 'blm' ) ) )
+							{
+								$this->log_error( 'Failed to extract ZIP file contents' );
+							    $zip->close();
+							    return false;
+							}
+
 							$zip->close();
 						}
 
@@ -219,7 +225,13 @@ class Houzez_Property_Feed_Format_Blm extends Houzez_Property_Feed_Process {
 					$zip = new ZipArchive;
 					if ($zip->open($zip_file) === TRUE) 
 					{
-					    $zip->extractTo($local_directory);
+					    if ( !$this->extract_supported_zip_files( $zip, $local_directory, array( 'blm' ) ) )
+						{
+							$this->log_error( 'Failed to extract ZIP file contents' );
+						    $zip->close();
+						    return false;
+						}
+
 					    $zip->close();
 					    sleep(1); // We sleep to ensure each BLM has a different modified time in the same order
 
@@ -449,7 +461,22 @@ class Houzez_Property_Feed_Format_Blm extends Houzez_Property_Feed_Process {
 
 		$pro_active = apply_filters( 'houzez_property_feed_pro_active', false );
 
-		$local_directory = $import_settings['local_directory'];
+		if ( $import_settings['format'] === 'blm_remote' )
+		{
+		    $wp_upload_dir = wp_upload_dir();
+
+		    if ( $wp_upload_dir['error'] !== false )
+		    {
+		        $this->log_error( 'Unable to access the uploads directory' );
+		        return false;
+		    }
+
+		    $local_directory = $wp_upload_dir['basedir'] . '/houzez_property_feed_import/' . $this->import_id . '/';
+		}
+		else
+		{
+		    $local_directory = $import_settings['local_directory'];
+		}
 
 		$this->import_start();
 

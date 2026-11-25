@@ -414,6 +414,7 @@ if ( is_array($imports) && !empty($imports) )
 						// Yes. There are properties queued. Let's fork a process
 						// At the end of the forked process maybe run the normal cron
 						$url = admin_url('admin-ajax.php?action=houzez_property_feed_import_properties_batch&originally_ran_manually=' . $originally_ran_manually . '&import_ids=' . rawurlencode(implode("|", $import_ids) ));
+						$url = add_query_arg( 'worker_token', houzez_property_feed_get_background_worker_token(), $url );
 
 						// Using wget to make a background HTTP request
 					    $command = "wget -q -O /dev/null \"$url\" > /dev/null 2>&1 &";
@@ -520,6 +521,7 @@ if ( is_array($imports) && !empty($imports) )
 	    if ( $process_background_queue_afterwards === true ) // at least one import had background mode enabled so let's fire it off
 	    {
 	    	$url = admin_url('admin-ajax.php?action=houzez_property_feed_import_properties_batch&originally_ran_manually=' . $originally_ran_manually . '&import_ids=' . rawurlencode(implode("|", $import_ids)));
+	    	$url = add_query_arg( 'worker_token', houzez_property_feed_get_background_worker_token(), $url );
 	    	
 	    	// Using wget to make a background HTTP request
 		    $command = "wget -q -O /dev/null \"$url\" > /dev/null 2>&1 &";

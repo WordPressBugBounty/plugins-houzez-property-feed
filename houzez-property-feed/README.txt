@@ -3,8 +3,8 @@ Contributors: PropertyHive
 Tags: property import, property export, houzez, houzez import property, real estate
 Requires at least: 3.8
 Tested up to: 7.1
-Stable tag: 2.5.53
-Version: 2.5.53
+Stable tag: 2.5.55
+Version: 2.5.55
 Homepage: https://houzezpropertyfeed.com
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
@@ -75,6 +75,7 @@ We can export and upload feeds from Houzez to third party portals in the followi
 
 * BLM
 * Facebook
+* Fotocasa
 * Idealista
 * Kyero v3 (including WPML support)
 * Rightmove and OnTheMarket Real-Time Format (RTDF)
@@ -147,6 +148,20 @@ Updating should work like a charm; as always though, ensure you backup your site
 4. Each time an import runs we'll store in-depth logs so you can see exactly what was imported and when, plus any errors that arose
 
 == Changelog ==
+
+= 2.5.55 - 2026-11-25 =
+* Add ability to normalise post data pre import to cater for someone using non-unicode characters to make text bold. Disabled by default
+* Updated custom ZIP extraction function to cater for hidden files and media only ZIPs
+
+= 2.5.54 - 2026-11-12 =
+* Added support for exporting to Fotocasa
+* Updated Alto feeds so no tokens are logged in text files or similar. Store them in a transient instead. Credit to Nathan Cross (CyberBadger)
+* Updated ZIP extraction for formats that use ZIPs to filter out files by filetype. Credit to Nathan Cross (CyberBadger)
+* Updated file that downloads archived feeds to include a capability check. Credit to Nathan Cross (CyberBadger)
+* Updated media handling in some import formats to remove the need to use the ALLOW_UNFILTERED_UPLOADS WordPress constant. Credit to Nathan Cross (CyberBadger)
+* Updated meta validation when importing from another Houzez site. Credit to Nathan Cross (CyberBadger)
+* Corrected missing nonce and/or capability checks for some actions. Credit to Nathan Cross (CyberBadger)
+* Corrected importing from another Houzez website where Elementor is being used by catering for serialized post meta '_elementor_page_assets'
 
 = 2.5.53 - 2026-11-04 =
 * Added support for importing properties from the miogest format

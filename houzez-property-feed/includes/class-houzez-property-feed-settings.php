@@ -24,6 +24,12 @@ class Houzez_Property_Feed_Settings {
             return;
         }
 
+        if ( !current_user_can( 'manage_options' ) )
+        {
+            wp_redirect( admin_url( 'admin.php?page=' . ( isset($_GET['page']) ? sanitize_text_field(wp_unslash($_GET['page'])) : 'houzez-property-feed-import' ) . '&tab=settings&hpferrormessage=' . base64_encode(urlencode( __( 'You do not have permission to perform this action.', 'houzezpropertyfeed' ) ) ) ) );
+            die();
+        }
+
         if ( !isset($_POST['_wpnonce']) || ( isset($_POST['_wpnonce']) && !wp_verify_nonce( sanitize_text_field(wp_unslash($_POST['_wpnonce'])), 'save-hpf-settings' ) ) ) 
         {
             die( __( "Failed security check", 'houzezpropertyfeed' ) );
@@ -65,6 +71,12 @@ class Houzez_Property_Feed_Settings {
         if ( !isset($_GET['export']) || empty($_GET['export']) )
         {
             return;
+        }
+
+        if ( !current_user_can( 'manage_options' ) )
+        {
+            wp_redirect( admin_url( 'admin.php?page=' . ( isset($_GET['page']) ? sanitize_text_field(wp_unslash($_GET['page'])) : 'houzez-property-feed-import' ) . '&tab=settings&hpferrormessage=' . base64_encode(urlencode( __( 'You do not have permission to perform this action.', 'houzezpropertyfeed' ) ) ) ) );
+            die();
         }
 
         if ( !isset($_GET['_wpnonce']) || ( isset($_GET['_wpnonce']) && !wp_verify_nonce( sanitize_text_field(wp_unslash($_GET['_wpnonce'])), 'export-import' ) ) ) 

@@ -55,6 +55,12 @@ class Houzez_Property_Feed_Export {
             return;
         }
 
+        if ( !current_user_can( 'manage_options' ) )
+        {
+            wp_redirect( admin_url( 'admin.php?page=houzez-property-feed-export&hpferrormessage=' . base64_encode(urlencode( __( 'You do not have permission to perform this action.', 'houzezpropertyfeed' ) ) ) ) );
+            die();
+        }
+
         if ( !isset($_POST['_wpnonce']) || ( isset($_POST['_wpnonce']) && !wp_verify_nonce( sanitize_text_field(wp_unslash($_POST['_wpnonce'])), 'save-export-settings' ) ) ) 
         {
             die( __( "Failed security check", 'houzezpropertyfeed' ) );
@@ -289,6 +295,18 @@ class Houzez_Property_Feed_Export {
         {
             $export_id = !empty($_GET['export_id']) ? (int)$_GET['export_id'] : '';
 
+            if ( !current_user_can( 'manage_options' ) )
+            {
+                wp_redirect( admin_url( 'admin.php?page=houzez-property-feed-export&hpferrormessage=' . base64_encode(urlencode( __( 'You do not have permission to manage exports', 'houzezpropertyfeed' ) ) ) ) );
+                die();
+            }
+
+            if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field(wp_unslash($_GET['_wpnonce'])), 'houzez_property_feed_' . sanitize_text_field(wp_unslash($_GET['action'])) . '_' . $export_id ) )
+            {
+                wp_redirect( admin_url( 'admin.php?page=houzez-property-feed-export&hpferrormessage=' . base64_encode(urlencode( __( 'Nonce verification failed. Please try again', 'houzezpropertyfeed' ) ) ) ) );
+                die();
+            }
+
             if ( empty($export_id) )
             {
                 wp_redirect( admin_url( 'admin.php?page=houzez-property-feed-export&hpferrormessage=' . base64_encode(__( 'No export passed', 'houzezpropertyfeed' ) ) ) );
@@ -342,12 +360,6 @@ class Houzez_Property_Feed_Export {
                 }
                 case "pushall":
                 {
-                    if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field(wp_unslash($_GET['_wpnonce'])), 'push-all' ) )
-                    {
-                        wp_redirect( admin_url( 'admin.php?page=houzez-property-feed-export&hpferrormessage=' . base64_encode(urlencode( __( 'Nonce verification failed. Please try again', 'houzezpropertyfeed' ) ) ) ) );
-                        die();
-                    }
-
                     if ( $options['exports'][$export_id]['running'] !== true )
                     {
                         wp_redirect( admin_url( 'admin.php?page=houzez-property-feed-export&hpferrormessage=' . base64_encode(urlencode( __( 'Export not active', 'houzezpropertyfeed' ) ) ) ) );
@@ -383,6 +395,12 @@ class Houzez_Property_Feed_Export {
     {
         if ( isset($_GET['action']) && $_GET['action'] == 'deleteexport' && isset($_GET['export_id']) )
         {
+            if ( !current_user_can( 'manage_options' ) )
+            {
+                wp_redirect( admin_url( 'admin.php?page=houzez-property-feed-export&hpferrormessage=' . base64_encode(urlencode( __( 'You do not have permission to perform this action.', 'houzezpropertyfeed' ) ) ) ) );
+                die();
+            }
+
             if ( !isset($_GET['_wpnonce']) || !check_admin_referer('delete-export') )
             {
                 wp_redirect( admin_url( 'admin.php?page=houzez-property-feed-export&hpferrormessage=' . base64_encode(urlencode( __( 'Security check failed', 'houzezpropertyfeed' ) ) ) ) );

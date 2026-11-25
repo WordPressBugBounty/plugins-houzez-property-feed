@@ -17,7 +17,9 @@
 
 				if ( $run_now_button )
 				{
-					echo '<a href="' . esc_url(admin_url('admin.php?page=houzez-property-feed-export&custom_property_export_cron=houzezpropertyfeedcronhook')) . '" class="button">Manually Execute Export</a>';
+					$nonce = wp_create_nonce('houzez_property_feed_export');
+
+					echo '<a href="' . esc_url(admin_url('admin.php?page=houzez-property-feed-export&custom_property_export_cron=houzezpropertyfeedcronhook' . '&_wpnonce=' . $nonce)) . '" class="button">Manually Execute Export</a>';
 				}
 			}
 			else

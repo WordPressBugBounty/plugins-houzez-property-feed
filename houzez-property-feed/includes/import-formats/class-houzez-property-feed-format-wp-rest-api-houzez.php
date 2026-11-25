@@ -1142,17 +1142,34 @@ class Houzez_Property_Feed_Format_Wp_Rest_Api_Houzez extends Houzez_Property_Fee
 
 						if ( !in_array($meta_key, $meta_fields_to_ignore) )
 						{
-							$double_serialized_fields = apply_filters( 'houzez_property_feed_wp_rest_api_double_serialized_fields', array( 'floor_plans', 'additional_features' ) );
+							if ( ! $this->is_safe_partner_meta_value( $meta_value ) )
+							{
+								$this->log_error(
+									'Skipped REST API meta containing an object, invalid serialized data or excessive nesting',
+									$property['id'],
+									$post_id
+								);
+
+								continue;
+							}
+
+							$double_serialized_fields = apply_filters( 'houzez_property_feed_wp_rest_api_double_serialized_fields', array( 'floor_plans', 'additional_features', '_elementor_page_assets' ) );
 							if ( in_array($meta_key, $double_serialized_fields) )
 							{
 								if ( is_string($meta_value) && is_serialized($meta_value) ) 
 								{
-						            $unserialized = maybe_unserialize($meta_value);
+						            $unserialized = unserialize(
+									    $meta_value,
+									    array( 'allowed_classes' => false )
+									);
 
 						            // If the unserialized value is still serialized, unserialize again
 						            if (is_string($unserialized) && is_serialized($unserialized)) 
 						            {
-						                $meta_value = maybe_unserialize($unserialized);
+						                $meta_value = unserialize(
+										    $unserialized,
+										    array( 'allowed_classes' => false )
+										);
 						            }
 						            else
 						            {
@@ -1635,6 +1652,58 @@ class Houzez_Property_Feed_Format_Wp_Rest_Api_Houzez extends Houzez_Property_Fee
 		do_action( "houzez_property_feed_post_import_properties_wp_rest_api_houzez", $this->import_id );
 
 		$this->import_end();
+	}
+
+	/**
+	 * Validate partner meta without changing its value or restricting its key.
+	 * Inspect serialized strings too, so objects cannot be stored for later decoding.
+	 */
+	private function is_safe_partner_meta_value( $value, $depth = 0 )
+	{
+		if ( $depth > 32 || is_object( $value ) )
+		{
+			return false;
+		}
+
+		if ( is_array( $value ) )
+		{
+			foreach ( $value as $item )
+			{
+				if ( ! $this->is_safe_partner_meta_value( $item, $depth + 1 ) )
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		if ( is_string( $value ) && is_serialized( $value ) )
+		{
+			$serialized = trim( $value );
+
+			try
+			{
+				$decoded = @unserialize( $serialized, array(
+					'allowed_classes' => false,
+					'max_depth' => 32,
+				) );
+			}
+			catch ( Throwable $error )
+			{
+				return false;
+			}
+
+			// false is also a valid serialized value, encoded as b:0;.
+			if ( $decoded === false && $serialized !== 'b:0;' )
+			{
+				return false;
+			}
+
+			return $this->is_safe_partner_meta_value( $decoded, $depth + 1 );
+		}
+
+		return $value === null || is_scalar( $value );
 	}
 
 	public function remove_old_properties()

@@ -19,8 +19,6 @@ class Houzez_Property_Feed_Format_Csv extends Houzez_Property_Feed_Process {
 
 	    	$this->log("Executed manually by " . ( ( isset($current_user->display_name) ) ? $current_user->display_name : '' ), '', 0, '', false );
 	    }
-
-	    if ( !defined('ALLOW_UNFILTERED_UPLOADS') ) { define( 'ALLOW_UNFILTERED_UPLOADS', true ); }
 	}
 
 	public function parse()
@@ -555,7 +553,18 @@ class Houzez_Property_Feed_Format_Csv extends Houzez_Property_Feed_Process {
 										}
 									}
 
-									$filename = basename( $url );
+									$path = wp_parse_url( $url, PHP_URL_PATH );
+
+									$filename = is_string( $path )
+									    ? pathinfo( basename( $path ), PATHINFO_FILENAME )
+									    : '';
+
+									$filename = sanitize_file_name( $filename );
+
+									if ( $filename === '' )
+									{
+									    $filename = 'media-' . md5( $url );
+									}
 
 									// Check, based on the URL, whether we have previously imported this media
 									$imported_previously = false;
@@ -610,11 +619,6 @@ class Houzez_Property_Feed_Format_Csv extends Houzez_Property_Feed_Process {
 
 											$tmp = download_url( $url );
 
-										    $file_array = array(
-										        'name' => $filename,
-										        'tmp_name' => $tmp
-										    );
-
 										    // Check for download errors
 										    if ( is_wp_error( $tmp ) ) 
 										    {
@@ -622,29 +626,63 @@ class Houzez_Property_Feed_Format_Csv extends Houzez_Property_Feed_Process {
 										    }
 										    else
 										    {
-											    $id = media_handle_sideload( $file_array, $post_id, $description );
+										    	$extensions = array(
+											        'image/jpeg' => 'jpg',
+											        'image/bmp'  => 'bmp',
+											        'image/png'  => 'png',
+											        'image/gif'  => 'gif',
+											        'image/webp' => 'webp',
+											        'image/avif' => 'avif',
+											    );
 
-											    // Check for handle sideload errors.
-											    if ( is_wp_error( $id ) ) 
+											    $mime_type = wp_get_image_mime( $tmp );
+
+											    if ( ! isset( $extensions[$mime_type] ) )
 											    {
-											        @unlink( $file_array['tmp_name'] );
-											        
-											        $this->log_error( 'ERROR: An error occurred whilst importing ' . $url . '. The error was as follows: ' . $id->get_error_message(), $property_id, $post_id );
+											        @unlink( $tmp );
+
+											        $this->log_error(
+											            'Downloaded file is not a supported image',
+											            $property_id,
+											            $post_id
+											        );
 											    }
 											    else
 											    {
-											    	$media_ids[] = $id;
+											    	if ( strlen($filename) > 100 )
+													{
+														$filename = substr($filename, -100);
+													}
 
-											    	update_post_meta( $id, '_imported_url', $url);
+											    	$file_array = array(
+												        'name' => $filename . '.' . $extensions[$mime_type],
+												        'tmp_name' => $tmp
+												    );
 
-											    	if ( $image_i == 0 ) set_post_thumbnail( $post_id, $id );
+												    $id = media_handle_sideload( $file_array, $post_id, $description );
 
-											    	++$new;
+												    // Check for handle sideload errors.
+												    if ( is_wp_error( $id ) ) 
+												    {
+												        @unlink( $file_array['tmp_name'] );
+												        
+												        $this->log_error( 'ERROR: An error occurred whilst importing ' . $url . '. The error was as follows: ' . $id->get_error_message(), $property_id, $post_id );
+												    }
+												    else
+												    {
+												    	$media_ids[] = $id;
 
-											    	++$image_i;
+												    	update_post_meta( $id, '_imported_url', $url);
 
-											    	update_option( 'houzez_property_feed_property_image_media_ids_' . $this->import_id, $post_id . '|' . implode(",", $media_ids), false );
-											    }
+												    	if ( $image_i == 0 ) set_post_thumbnail( $post_id, $id );
+
+												    	++$new;
+
+												    	++$image_i;
+
+												    	update_option( 'houzez_property_feed_property_image_media_ids_' . $this->import_id, $post_id . '|' . implode(",", $media_ids), false );
+												    }
+												}
 											}
 										}
 										else
@@ -712,18 +750,18 @@ class Houzez_Property_Feed_Format_Csv extends Houzez_Property_Feed_Process {
 												}
 											}
 
-											$filename = basename( $url );
+											$path = wp_parse_url( $url, PHP_URL_PATH );
 
-											$extension = pathinfo($filename, PATHINFO_EXTENSION);
+											$filename = is_string( $path )
+											    ? pathinfo( basename( $path ), PATHINFO_FILENAME )
+											    : '';
 
-										    // List of allowed image file extensions
-										    $allowed_extensions = array('jpg', 'jpeg', 'png', 'gif', 'bmp');
+											$filename = sanitize_file_name( $filename );
 
-										    // Check if the extension is empty or not in the allowed extensions list
-										    if (empty($extension) || !in_array(strtolower($extension), $allowed_extensions)) {
-										        // Append '.jpg' if the extension is missing or not valid
-										        $filename .= '.jpg';
-										    }
+											if ( $filename === '' )
+											{
+											    $filename = 'media-' . md5( $url );
+											}
 
 											// Check, based on the URL, whether we have previously imported this media
 											$imported_previously = false;
@@ -778,11 +816,6 @@ class Houzez_Property_Feed_Format_Csv extends Houzez_Property_Feed_Process {
 
 													$tmp = download_url( $url );
 
-												    $file_array = array(
-												        'name' => $filename,
-												        'tmp_name' => $tmp
-												    );
-
 												    // Check for download errors
 												    if ( is_wp_error( $tmp ) ) 
 												    {
@@ -790,29 +823,63 @@ class Houzez_Property_Feed_Format_Csv extends Houzez_Property_Feed_Process {
 												    }
 												    else
 												    {
-													    $id = media_handle_sideload( $file_array, $post_id, $description );
+												    	$extensions = array(
+													        'image/jpeg' => 'jpg',
+													        'image/bmp'  => 'bmp',
+													        'image/png'  => 'png',
+													        'image/gif'  => 'gif',
+													        'image/webp' => 'webp',
+													        'image/avif' => 'avif',
+													    );
 
-													    // Check for handle sideload errors.
-													    if ( is_wp_error( $id ) ) 
+													    $mime_type = wp_get_image_mime( $tmp );
+
+													    if ( ! isset( $extensions[$mime_type] ) )
 													    {
-													        @unlink( $file_array['tmp_name'] );
-													        
-													        $this->log_error( 'ERROR: An error occurred whilst importing ' . $url . '. The error was as follows: ' . $id->get_error_message(), $property_id, $post_id );
+													        @unlink( $tmp );
+
+													        $this->log_error(
+													            'Downloaded file is not a supported image',
+													            $property_id,
+													            $post_id
+													        );
 													    }
 													    else
 													    {
-													    	$media_ids[] = $id;
+													    	if ( strlen($filename) > 100 )
+															{
+																$filename = substr($filename, -100);
+															}
 
-													    	update_post_meta( $id, '_imported_url', $url);
+													    	$file_array = array(
+														        'name' => $filename . '.' . $extensions[$mime_type],
+														        'tmp_name' => $tmp
+														    );
 
-													    	if ( $image_i == 0 ) set_post_thumbnail( $post_id, $id );
+														    $id = media_handle_sideload( $file_array, $post_id, $description );
 
-													    	++$new;
+														    // Check for handle sideload errors.
+														    if ( is_wp_error( $id ) ) 
+														    {
+														        @unlink( $file_array['tmp_name'] );
+														        
+														        $this->log_error( 'ERROR: An error occurred whilst importing ' . $url . '. The error was as follows: ' . $id->get_error_message(), $property_id, $post_id );
+														    }
+														    else
+														    {
+														    	$media_ids[] = $id;
 
-													    	++$image_i;
+														    	update_post_meta( $id, '_imported_url', $url);
 
-													    	update_option( 'houzez_property_feed_property_image_media_ids_' . $this->import_id, $post_id . '|' . implode(",", $media_ids), false );
-													    }
+														    	if ( $image_i == 0 ) set_post_thumbnail( $post_id, $id );
+
+														    	++$new;
+
+														    	++$image_i;
+
+														    	update_option( 'houzez_property_feed_property_image_media_ids_' . $this->import_id, $post_id . '|' . implode(",", $media_ids), false );
+														    }
+														}
 													}
 												}
 												else
@@ -1074,7 +1141,18 @@ class Houzez_Property_Feed_Format_Csv extends Houzez_Property_Feed_Process {
 							)
 							{
 								// This is a URL
-								$filename = basename( $url );
+								$path = wp_parse_url( $url, PHP_URL_PATH );
+
+								$filename = is_string( $path )
+								    ? pathinfo( basename( $path ), PATHINFO_FILENAME )
+								    : '';
+
+								$filename = sanitize_file_name( $filename );
+
+								if ( $filename === '' )
+								{
+								    $filename = 'media-' . md5( $url );
+								}
 
 								// Check, based on the URL, whether we have previously imported this media
 								$imported_previously = false;
@@ -1121,11 +1199,6 @@ class Houzez_Property_Feed_Format_Csv extends Houzez_Property_Feed_Process {
 
 									$tmp = download_url( $url );
 
-								    $file_array = array(
-								        'name' => $filename,
-								        'tmp_name' => $tmp
-								    );
-
 								    // Check for download errors
 								    if ( is_wp_error( $tmp ) ) 
 								    {
@@ -1133,6 +1206,55 @@ class Houzez_Property_Feed_Format_Csv extends Houzez_Property_Feed_Process {
 								    }
 								    else
 								    {
+								    	$extensions = array(
+										    'image/jpeg' => 'jpg',
+										    'image/bmp'  => 'bmp',
+										    'image/png'  => 'png',
+										    'image/gif'  => 'gif',
+										    'image/webp' => 'webp',
+										    'image/avif' => 'avif',
+										);
+
+										// Identify supported images from the downloaded content.
+										$mime_type = wp_get_image_mime( $tmp );
+										$extension = isset( $extensions[$mime_type] )
+										    ? $extensions[$mime_type]
+										    : false;
+
+										// If it isn't a supported image, check for PDF content.
+										if ( $extension === false && class_exists( 'finfo' ) )
+										{
+										    $fileinfo = new finfo( FILEINFO_MIME_TYPE );
+
+										    if ( $fileinfo->file( $tmp ) === 'application/pdf' )
+										    {
+										        $extension = 'pdf';
+										    }
+										}
+
+										if ( $extension === false )
+										{
+										    @unlink( $tmp );
+
+										    $this->log_error(
+										        'Downloaded document is not a supported image or PDF',
+										        $property_id,
+										        $post_id
+										    );
+
+										    continue;
+										}
+								    	
+								    	if ( strlen($filename) > 100 )
+										{
+											$filename = substr($filename, -100);
+										}
+
+								    	$file_array = array(
+									        'name' => $filename . '.' . $extension,
+									        'tmp_name' => $tmp
+									    );
+
 									    $id = media_handle_sideload( $file_array, $post_id, $description, array(
 	                                        'post_title' => $description,
 	                                        'post_excerpt' => $description
@@ -1190,7 +1312,18 @@ class Houzez_Property_Feed_Format_Csv extends Houzez_Property_Feed_Process {
 									)
 									{
 										// This is a URL
-										$filename = basename( $url );
+										$path = wp_parse_url( $url, PHP_URL_PATH );
+
+										$filename = is_string( $path )
+										    ? pathinfo( basename( $path ), PATHINFO_FILENAME )
+										    : '';
+
+										$filename = sanitize_file_name( $filename );
+
+										if ( $filename === '' )
+										{
+										    $filename = 'media-' . md5( $url );
+										}
 
 										// Check, based on the URL, whether we have previously imported this media
 										$imported_previously = false;
@@ -1237,11 +1370,6 @@ class Houzez_Property_Feed_Format_Csv extends Houzez_Property_Feed_Process {
 											
 											$tmp = download_url( $url );
 
-										    $file_array = array(
-										        'name' => $filename,
-										        'tmp_name' => $tmp
-										    );
-
 										    // Check for download errors
 										    if ( is_wp_error( $tmp ) ) 
 										    {
@@ -1249,6 +1377,55 @@ class Houzez_Property_Feed_Format_Csv extends Houzez_Property_Feed_Process {
 										    }
 										    else
 										    {
+										    	$extensions = array(
+												    'image/jpeg' => 'jpg',
+												    'image/bmp'  => 'bmp',
+												    'image/png'  => 'png',
+												    'image/gif'  => 'gif',
+												    'image/webp' => 'webp',
+												    'image/avif' => 'avif',
+												);
+
+												// Identify supported images from the downloaded content.
+												$mime_type = wp_get_image_mime( $tmp );
+												$extension = isset( $extensions[$mime_type] )
+												    ? $extensions[$mime_type]
+												    : false;
+
+												// If it isn't a supported image, check for PDF content.
+												if ( $extension === false && class_exists( 'finfo' ) )
+												{
+												    $fileinfo = new finfo( FILEINFO_MIME_TYPE );
+
+												    if ( $fileinfo->file( $tmp ) === 'application/pdf' )
+												    {
+												        $extension = 'pdf';
+												    }
+												}
+
+												if ( $extension === false )
+												{
+												    @unlink( $tmp );
+
+												    $this->log_error(
+												        'Downloaded document is not a supported image or PDF',
+												        $property_id,
+												        $post_id
+												    );
+
+												    continue;
+												}
+										    	
+										    	if ( strlen($filename) > 100 )
+												{
+													$filename = substr($filename, -100);
+												}
+
+											    $file_array = array(
+											        'name' => $filename . '.' . $extension,
+											        'tmp_name' => $tmp
+											    );
+
 											    $id = media_handle_sideload( $file_array, $post_id, $description, array(
 			                                        'post_title' => $description,
 			                                        'post_excerpt' => $description

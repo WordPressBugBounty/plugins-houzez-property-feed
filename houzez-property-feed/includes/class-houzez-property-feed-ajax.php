@@ -417,6 +417,17 @@ class Houzez_Property_Feed_Ajax {
 
     public function import_properties_batch()
     {
+        $expected_token = get_option( 'houzez_property_feed_background_worker_token', '' );
+        $provided_token = isset( $_GET['worker_token'] ) && is_string( $_GET['worker_token'] )
+            ? wp_unslash( $_GET['worker_token'] )
+            : '';
+
+        if ( ! is_string( $expected_token ) || $expected_token === '' ||
+            ! hash_equals( $expected_token, $provided_token ) )
+        {
+            wp_die( 'Invalid background worker token.', '', array( 'response' => 403 ) );
+        }
+
         global $wpdb;
 
         $batch_size = (int)apply_filters( 'houzez_property_feed_background_mode_batch_size', 10 );
@@ -497,8 +508,8 @@ class Houzez_Property_Feed_Ajax {
                             array( 'id' => $last_instance_id )
                         );
 
-                        do_action( 'houzez_property_feed_cron_end', $instance_id, $import_id );
-                        do_action( 'houzez_property_feed_import_cron_end', $instance_id, $import_id );
+                        do_action( 'houzez_property_feed_cron_end', $last_instance_id, $import_id );
+                        do_action( 'houzez_property_feed_import_cron_end', $last_instance_id, $import_id );
                     }
 
                     $import_id = (int)$property_queue_row->import_id;
@@ -628,6 +639,7 @@ class Houzez_Property_Feed_Ajax {
         if ( !empty($property_queue) ) 
         {
             $url = admin_url('admin-ajax.php?action=houzez_property_feed_import_properties_batch&originally_ran_manually=' . ( ( isset($_GET['originally_ran_manually']) && $_GET['originally_ran_manually'] == 'yes' ) ? 'yes' : '' ) . '&import_ids=' . ( isset($_GET['import_ids']) ? rawurlencode(sanitize_text_field($_GET['import_ids'])) : '' ) );
+            $url = add_query_arg( 'worker_token', houzez_property_feed_get_background_worker_token(), $url );
 
             // Using wget to make a background HTTP request
             $command = "wget -q -O /dev/null \"$url\" > /dev/null 2>&1 &";

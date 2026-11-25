@@ -321,28 +321,28 @@ class Houzez_Property_Feed_Admin_Automatic_Exports_Table extends WP_List_Table {
             $actions = array();
             if ( !$running )
             {
-                $actions[] = '<a href="' . esc_url( admin_url('admin.php?page=houzez-property-feed-export&action=startexport&export_id=' . (int)$key) ) . '" aria-label="' . esc_attr( __( 'Start Export', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'Start Export', 'houzezpropertyfeed' ) ) . '</a>';
+                $actions[] = '<a href="' . esc_url( wp_nonce_url( admin_url('admin.php?page=houzez-property-feed-export&action=startexport&export_id=' . (int)$key), 'houzez_property_feed_startexport_' . (int)$key ) ) . '" aria-label="' . esc_attr( __( 'Start Export', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'Start Export', 'houzezpropertyfeed' ) ) . '</a>';
             }
             else
             {
-                $actions[] = '<a href="' . esc_url( admin_url('admin.php?page=houzez-property-feed-export&action=pauseexport&export_id=' . (int)$key) ) . '" aria-label="' . esc_attr( __( 'Pause Export', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'Pause Export', 'houzezpropertyfeed' ) ) . '</a>';
+                $actions[] = '<a href="' . esc_url( wp_nonce_url( admin_url('admin.php?page=houzez-property-feed-export&action=pauseexport&export_id=' . (int)$key), 'houzez_property_feed_pauseexport_' . (int)$key ) ) . '" aria-label="' . esc_attr( __( 'Pause Export', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'Pause Export', 'houzezpropertyfeed' ) ) . '</a>';
             }
             $actions[] = '<a href="' . esc_url( admin_url('/admin.php?page=houzez-property-feed-export&tab=logs&export_id=' . (int)$key) ) . '" aria-label="' . esc_attr( __( 'View Logs', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'Logs', 'houzezpropertyfeed' ) ) . '</a>';
             $actions[] = '<a href="' . esc_url( admin_url('admin.php?page=houzez-property-feed-export&action=editexport&export_id=' . (int)$key) ) . '" aria-label="' . esc_attr( __( 'Edit Export', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'Edit', 'houzezpropertyfeed' ) ) . '</a>';
             
             if ( $export['format'] == 'blm' && $running )
             {
-                $actions[] = '<a href="' . esc_url( admin_url('admin.php?page=houzez-property-feed-export&custom_property_export_cron=houzezpropertyfeedcronhook&preview=' . (int)$key) ) . '" aria-label="' . esc_attr( __( 'Preview BLM', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'View BLM', 'houzezpropertyfeed' ) ) . '</a>';
+                $actions[] = '<a href="' . esc_url( wp_nonce_url( admin_url('admin.php?page=houzez-property-feed-export&custom_property_export_cron=houzezpropertyfeedcronhook&preview=' . (int)$key), 'houzez_property_feed_export') ) . '" aria-label="' . esc_attr( __( 'Preview BLM', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'View BLM', 'houzezpropertyfeed' ) ) . '</a>';
             }
 
             if ( $export['format'] == 'idealista' && $running )
             {
-                $actions[] = '<a href="' . esc_url( admin_url('admin.php?page=houzez-property-feed-export&custom_property_export_cron=houzezpropertyfeedcronhook&preview=' . (int)$key) ) . '" aria-label="' . esc_attr( __( 'Preview JSON', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'View JSON', 'houzezpropertyfeed' ) ) . '</a>';
+                $actions[] = '<a href="' . esc_url( wp_nonce_url( admin_url('admin.php?page=houzez-property-feed-export&custom_property_export_cron=houzezpropertyfeedcronhook&preview=' . (int)$key), 'houzez_property_feed_export') ) . '" aria-label="' . esc_attr( __( 'Preview JSON', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'View JSON', 'houzezpropertyfeed' ) ) . '</a>';
             }
 
             if ( $format['method'] == 'realtime' && $running )
             {
-                $actions[] = '<a href="' . esc_url( wp_nonce_url( admin_url('/admin.php?page=houzez-property-feed-export&action=pushall&export_id=' . (int)$key), 'push-all' ) ) . '" aria-label="' . esc_attr( __( 'Push All Properties', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'Push All', 'houzezpropertyfeed' ) ) . '</a>';
+                $actions[] = '<a href="' . esc_url( wp_nonce_url( admin_url('/admin.php?page=houzez-property-feed-export&action=pushall&export_id=' . (int)$key), 'houzez_property_feed_pushall_' . (int)$key) ) . '" aria-label="' . esc_attr( __( 'Push All Properties', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'Push All', 'houzezpropertyfeed' ) ) . '</a>';
             }
 
             $actions[] = '<a href="' . esc_url( wp_nonce_url( admin_url('admin.php?page=houzez-property-feed-export&action=deleteexport&export_id=' . (int)$key), 'delete-export' ) ) . '" class="submitdelete" aria-label="' . esc_attr( __( 'Delete Export', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'Delete', 'houzezpropertyfeed' ) ) . '';

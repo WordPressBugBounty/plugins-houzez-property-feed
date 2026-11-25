@@ -916,6 +916,179 @@ class Houzez_Property_Feed_Process {
 
 		return $property_row;
     }
+
+    /**
+	 * Extract supported feed and media files from an already-open ZIP.
+	 *
+	 * Unsupported files are skipped. Unsafe archive paths or symlinks
+	 * cause extraction to fail before any files are extracted.
+	 *
+	 * @param ZipArchive $zip             Already-open ZIP archive.
+	 * @param string     $local_directory Destination directory.
+	 * @param array      $feed_extensions Expected feed extensions, without dots.
+	 *
+	 * @return bool
+	 */
+	protected function extract_supported_zip_files( $zip, $local_directory, $feed_extensions = array( 'xml' ) )
+	{
+	    $media_extensions = array(
+	        'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp',
+	        'pdf',
+	        'mp4', 'mov', 'webm',
+	    );
+
+	    // Only permit the feed formats supported by this helper.
+	    $feed_extensions = array_intersect(
+	        array_map( 'strtolower', $feed_extensions ),
+	        array( 'blm', 'xml' )
+	    );
+
+	    if ( empty( $feed_extensions ) )
+	    {
+	        $this->log_error( 'No supported feed extension specified' );
+	        return false;
+	    }
+
+	    $allowed_extensions = array_merge(
+	        $feed_extensions,
+	        $media_extensions
+	    );
+
+	    $destination = realpath( $local_directory );
+
+	    if ( $destination === false || ! is_dir( $destination ) ||
+	        ! is_writable( $destination ) )
+	    {
+	        $this->log_error( 'ZIP extraction directory is unavailable' );
+	        return false;
+	    }
+
+	    $files_to_extract = array();
+
+	    for ( $i = 0; $i < $zip->numFiles; $i++ )
+	    {
+	        $name = $zip->getNameIndex( $i );
+
+	        if ( $name === false || $name === '' )
+	        {
+	            $this->log_error( 'Unable to read ZIP member name' );
+	            return false;
+	        }
+
+	        // Reject ambiguous paths, absolute paths and traversal.
+	        if ( strpos( $name, '\\' ) !== false ||
+	            strpos( $name, "\0" ) !== false )
+	        {
+	            $this->log_error( 'ZIP contains an unsafe path' );
+	            return false;
+	        }
+
+	        // Directory entries need not be extracted explicitly.
+	        $is_directory = substr( $name, -1 ) === '/';
+	        $path = $is_directory ? substr( $name, 0, -1 ) : $name;
+	        $parts = explode( '/', $path );
+
+	        $skip_metadata = false;
+
+	        foreach ( $parts as $part )
+	        {
+	            if ( $part === '' || $part === '.' || $part === '..' ||
+	                preg_match( '/[[:cntrl:]:*?"<>|]/', $part ) ||
+	                preg_match( '/[. ]$/', $part ) )
+	            {
+	                $this->log_error( 'ZIP contains an unsafe path' );
+	                return false;
+	            }
+
+	            if ( substr( $part, 0, 1 ) === '.' || $part === '__MACOSX' )
+	            {
+	                $skip_metadata = true;
+	            }
+	        }
+
+	        $operating_system = 0;
+	        $attributes = 0;
+
+	        if ( ! $zip->getExternalAttributesIndex(
+	            $i,
+	            $operating_system,
+	            $attributes
+	        ) )
+	        {
+	            $this->log_error( 'Unable to inspect ZIP member attributes' );
+	            return false;
+	        }
+
+	        // Reject Unix symlinks and other special filesystem entries.
+	        if ( $operating_system === 3 )
+	        {
+	            $file_type = ( $attributes >> 16 ) & 0170000;
+	            $expected_type = $is_directory ? 0040000 : 0100000;
+
+	            if ( $file_type !== 0 && $file_type !== $expected_type )
+	            {
+	                $this->log_error( 'ZIP contains a symlink or special file' );
+	                return false;
+	            }
+	        }
+
+	        if ( $is_directory || $skip_metadata )
+	        {
+	            continue;
+	        }
+
+	        $filename = end( $parts );
+	        $extension = strtolower(
+	            pathinfo( $filename, PATHINFO_EXTENSION )
+	        );
+
+	        if ( ! in_array( $extension, $allowed_extensions, true ) )
+	        {
+	            continue;
+	        }
+
+	        // Reject executable intermediate extensions, e.g. photo.php.jpg.
+	        if ( preg_match(
+	            '/\.(?:php\d*|phtml|pht|phar|cgi|pl|py|sh|shtml|asp|aspx|jsp)(?:\.|$)/i',
+	            $filename
+	        ) )
+	        {
+	            continue;
+	        }
+
+	        // Do not follow existing symlinks in the destination path.
+	        $target = $destination;
+
+	        foreach ( $parts as $part )
+	        {
+	            $target .= DIRECTORY_SEPARATOR . $part;
+
+	            if ( is_link( $target ) )
+	            {
+	                $this->log_error( 'ZIP destination contains a symlink' );
+	                return false;
+	            }
+	        }
+
+	        $files_to_extract[] = $name;
+
+	    }
+
+	    // Separate archives may contain only media or unsupported metadata.
+	    // Never pass an empty member list to extractTo(), which may extract everything.
+	    if ( empty( $files_to_extract ) )
+	    {
+	        return true;
+	    }
+
+	    if ( ! $zip->extractTo( $destination, $files_to_extract ) )
+	    {
+	        $this->log_error( 'Failed to extract supported ZIP members' );
+	        return false;
+	    }
+
+	    return true;
+	}
 }
 
 class SimpleXMLExtendedHpf extends SimpleXMLElement {

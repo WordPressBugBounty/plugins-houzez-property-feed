@@ -46,6 +46,12 @@ class Houzez_Property_Feed_Cron {
                 }
             }
 
+            if ( ! current_user_can( 'manage_options' ) )
+            {
+                wp_redirect( admin_url( $redirect_url . '&hpferrormessage=' . base64_encode(__( "You do not have permission to run imports.", 'houzezpropertyfeed' ) ) ) );
+                die();
+            }
+
             if ( !isset($_GET['force']) )
             {
                 global $wpdb;
@@ -101,8 +107,17 @@ class Houzez_Property_Feed_Cron {
      */
     public function check_for_manually_run_export() 
     {
-        if ( isset($_GET['custom_property_export_cron']) && sanitize_text_field($_GET['custom_property_export_cron']) == 'houzezpropertyfeedcronhook' )
+        if ( 
+            isset($_GET['_wpnonce']) && wp_verify_nonce($_GET['_wpnonce'], 'houzez_property_feed_export') &&
+            isset($_GET['custom_property_export_cron']) && sanitize_text_field($_GET['custom_property_export_cron']) == 'houzezpropertyfeedcronhook' 
+        )
         {
+            if ( ! current_user_can( 'manage_options' ) )
+            {
+                wp_redirect( admin_url( 'admin.php?page=houzez-property-feed-export&hpferrormessage=' . base64_encode(__( "You do not have permission to run exports.", 'houzezpropertyfeed' ) ) ) );
+                die();
+            }
+
             if ( !isset($_GET['force']) )
             {
                 global $wpdb;
@@ -165,14 +180,6 @@ class Houzez_Property_Feed_Cron {
             do_action(sanitize_text_field($_GET['custom_property_export_cron']));
 
             wp_redirect( admin_url( 'admin.php?page=houzez-property-feed-export&hpfsuccessmessage=' . base64_encode( urlencode(__( 'Export executed successfully. You can check <a href="' . esc_url( admin_url('admin.php?page=houzez-property-feed-export&tab=logs') ) . '">the logs</a> to see what happened during the export.', 'houzezpropertyfeed' ) ) ) ) );
-            die();
-        }
-
-        if ( isset($_GET['custom_property_export_cron']) && sanitize_text_field($_GET['custom_property_export_cron']) == 'houzezpropertyfeedreconcilecronhook' )
-        {
-            do_action(sanitize_text_field($_GET['custom_property_export_cron']));
-
-            wp_redirect( admin_url( 'admin.php?page=houzez-property-feed-export&hpfsuccessmessage=' . base64_encode(__( 'Reconcilliation executed successfully. You can check the logs to see what happened during the reconcilliation.', 'houzezpropertyfeed' ) ) ) );
             die();
         }
     }

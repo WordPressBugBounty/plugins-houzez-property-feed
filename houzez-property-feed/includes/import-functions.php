@@ -2,6 +2,24 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
+/**
+ * Get the private token used to authenticate background import requests.
+ * add_option() ensures concurrent initial requests use the same saved token.
+ */
+function houzez_property_feed_get_background_worker_token()
+{
+    $option_name = 'houzez_property_feed_background_worker_token';
+    $token = get_option( $option_name, '' );
+
+    if ( ! is_string( $token ) || $token === '' )
+    {
+        add_option( $option_name, wp_generate_password( 64, false, false ), '', false );
+        $token = get_option( $option_name, '' );
+    }
+
+    return is_string( $token ) ? $token : '';
+}
+
 function houzez_property_feed_get_import_settings_from_id( $import_id )
 {
     $options = get_option( 'houzez_property_feed' , array() );

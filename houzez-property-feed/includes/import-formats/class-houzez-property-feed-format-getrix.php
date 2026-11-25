@@ -44,7 +44,7 @@ class Houzez_Property_Feed_Format_Getrix extends Houzez_Property_Feed_Process {
 	        return false;
 	    }
 
-		$local_directory = $wp_upload_dir['basedir'] . '/houzez_property_feed_import/' . $import_id . '/';
+		$local_directory = $wp_upload_dir['basedir'] . '/houzez_property_feed_import/' . $this->import_id . '/';
 
 		$response = wp_remote_get( $import_settings['xml_url'], array( 'timeout' => 360, 'sslverify' => false ) );
 
@@ -90,13 +90,19 @@ class Houzez_Property_Feed_Format_Getrix extends Houzez_Property_Feed_Process {
 						return false;
 					}
 
-					$this->log_error( 'Extracting ZIP file contents' );
+					$this->log( 'Extracting ZIP file contents' );
 
 					// Unzip local zip file, then remove it
 					$zip = new ZipArchive;
 					if ($zip->open($zip_file) === TRUE)
 					{
-						$zip->extractTo($local_directory);
+						if ( !$this->extract_supported_zip_files( $zip, $local_directory, array( 'xml' ) ) )
+						{
+							$this->log_error( 'Failed to extract ZIP file contents' );
+						    $zip->close();
+						    return false;
+						}
+						
 						$zip->close();
 					}
 

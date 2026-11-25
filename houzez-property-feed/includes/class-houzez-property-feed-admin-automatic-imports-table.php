@@ -634,8 +634,8 @@ class Houzez_Property_Feed_Admin_Automatic_Imports_Table extends WP_List_Table {
             $actions = array();
             $actions[] = '<span class="edit">' . ( 
                 !$running ? 
-                '<a href="' . esc_url(admin_url('admin.php?page=houzez-property-feed-import&action=startimport&import_id=' . (int)$key . '&orderby=' . $orderby . '&order=' . $order . '&hpf_filter=' . $hpf_filter . '&hpf_filter_format=' . $hpf_filter_format)) . '" aria-label="' . esc_attr( __( 'Start Import', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'Start Import', 'houzezpropertyfeed' ) ) . '</a>' : 
-                '<a href="' . esc_url(admin_url('admin.php?page=houzez-property-feed-import&action=pauseimport&import_id=' . (int)$key . '&orderby=' . $orderby . '&order=' . $order . '&hpf_filter=' . $hpf_filter . '&hpf_filter_format=' . $hpf_filter_format)) . '" aria-label="' . esc_attr( __( 'Pause Import', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'Pause Import', 'houzezpropertyfeed' ) ) . '</a>' 
+                '<a href="' . esc_url(wp_nonce_url(admin_url('admin.php?page=houzez-property-feed-import&action=startimport&import_id=' . (int)$key . '&orderby=' . $orderby . '&order=' . $order . '&hpf_filter=' . $hpf_filter . '&hpf_filter_format=' . $hpf_filter_format), 'houzez_property_feed_startimport_' . (int)$key)) . '" aria-label="' . esc_attr( __( 'Start Import', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'Start Import', 'houzezpropertyfeed' ) ) . '</a>' : 
+                '<a href="' . esc_url(wp_nonce_url(admin_url('admin.php?page=houzez-property-feed-import&action=pauseimport&import_id=' . (int)$key . '&orderby=' . $orderby . '&order=' . $order . '&hpf_filter=' . $hpf_filter . '&hpf_filter_format=' . $hpf_filter_format), 'houzez_property_feed_pauseimport_' . (int)$key)) . '" aria-label="' . esc_attr( __( 'Pause Import', 'houzezpropertyfeed' ) ) . '">' . esc_html( __( 'Pause Import', 'houzezpropertyfeed' ) ) . '</a>' 
             ) . '</span>';
             if ( $running ) 
             { 

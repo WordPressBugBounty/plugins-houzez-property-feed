@@ -30,6 +30,9 @@ class Houzez_Property_Feed_Import {
 
         add_action( 'add_meta_boxes', array( $this, 'import_data_meta_box') );
 
+        add_filter( 'houzez_property_feed_insert_postarr', array( $this, 'normalize_property_feed_postarr' ), 10, 3 );
+        add_filter( 'houzez_property_feed_update_postarr', array( $this, 'normalize_property_feed_postarr' ), 10, 3 );
+
         add_action( "houzez_property_feed_post_import_properties", array( $this, 'set_location_taxonomy_parents' ) );
 
         add_action( "houzez_property_feed_property_imported", array( $this, 'update_queue_status' ), 10, 4 );
@@ -66,13 +69,19 @@ class Houzez_Property_Feed_Import {
     {
         if ( isset($_GET['action']) && sanitize_text_field(wp_unslash($_GET['action'])) == 'cloneimport' )
         {
-            $import_id = ( isset($_GET['import_id']) && !empty(sanitize_text_field(wp_unslash($_GET['import_id']))) ) ? (int)$_GET['import_id'] : false;
-
             $redirect_url = 'admin.php?page=houzez-property-feed-import';
             if ( isset($_REQUEST['orderby']) && !empty($_REQUEST['orderby']) && isset($_REQUEST['order']) && in_array(strtolower($_REQUEST['order']), array('asc', 'desc')) )
             {
                 $redirect_url .= '&orderby=' . sanitize_text_field(wp_unslash($_REQUEST['orderby'])) . '&order=' . sanitize_text_field(wp_unslash($_REQUEST['order']));
             }
+
+            if ( !current_user_can( 'manage_options' ) )
+            {
+                wp_redirect( admin_url( $redirect_url . '&hpferrormessage=' . base64_encode(urlencode( __( 'You do not have permission to perform this action.', 'houzezpropertyfeed' ) ) ) ) );
+                die();
+            }
+
+            $import_id = ( isset($_GET['import_id']) && !empty(sanitize_text_field(wp_unslash($_GET['import_id']))) ) ? (int)$_GET['import_id'] : false;
 
             if ( !isset($_GET['_wpnonce']) || !check_admin_referer('clone-import') )
             {
@@ -113,6 +122,12 @@ class Houzez_Property_Feed_Import {
         if ( !isset($_POST['save_import_settings']) )
         {
             return;
+        }
+
+        if ( !current_user_can( 'manage_options' ) )
+        {
+            wp_redirect( admin_url( 'admin.php?page=houzez-property-feed-import&hpferrormessage=' . base64_encode(__( 'You do not have permission to perform this action.', 'houzezpropertyfeed' ) ) ) );
+            die();
         }
 
         if ( !isset($_POST['_wpnonce']) || ( isset($_POST['_wpnonce']) && !wp_verify_nonce( sanitize_text_field(wp_unslash($_POST['_wpnonce'])), 'save-import-settings' ) ) ) 
@@ -469,6 +484,18 @@ class Houzez_Property_Feed_Import {
                 }
             }
 
+            if ( !current_user_can( 'manage_options' ) )
+            {
+                wp_redirect( admin_url( $redirect_url . '&hpferrormessage=' . base64_encode(urlencode( __( 'You do not have permission to manage imports', 'houzezpropertyfeed' ) ) ) ) );
+                die();
+            }
+
+            if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field(wp_unslash($_GET['_wpnonce'])), 'houzez_property_feed_' . sanitize_text_field(wp_unslash($_GET['action'])) . '_' . $import_id ) )
+            {
+                wp_redirect( admin_url( $redirect_url . '&hpferrormessage=' . base64_encode(urlencode( __( 'Nonce verification failed. Please try again', 'houzezpropertyfeed' ) ) ) ) );
+                die();
+            }
+
             if ( empty($import_id) )
             {
                 wp_redirect( admin_url( $redirect_url . '&hpferrormessage=' . base64_encode(__( 'No import passed', 'houzezpropertyfeed' ) ) ) );
@@ -539,6 +566,12 @@ class Houzez_Property_Feed_Import {
     {
         if ( isset($_GET['action']) && sanitize_text_field(wp_unslash($_GET['action'])) == 'deleteimport' && isset($_GET['import_id']) )
         {
+            if ( !current_user_can( 'manage_options' ) )
+            {
+                wp_redirect( admin_url( 'admin.php?page=houzez-property-feed-import&hpferrormessage=' . base64_encode(urlencode( __( 'You do not have permission to perform this action.', 'houzezpropertyfeed' ) ) ) ) );
+                die();
+            }
+
             $import_id = !empty($_GET['import_id']) ? (int)$_GET['import_id'] : '';
 
             if ( !isset($_GET['_wpnonce']) || !check_admin_referer('delete-import') )
@@ -1823,6 +1856,53 @@ class Houzez_Property_Feed_Import {
                 add_meta_box( 'houzezpropertyfeed-import-data', __( 'Import Data', 'houzezpropertyfeed' ), array( $this, 'output_import_data_meta_box'), 'property', 'advanced', 'low' );
             }
         }
+    }
+
+    public function normalize_property_feed_postarr( $postdata, $property, $import_id )
+    {
+        if ( !apply_filters( 'houzez_property_feed_normalize_text', false, $import_id ) )
+        {
+            return $postdata;
+        }
+
+        $fields = array( 'post_title', 'post_content', 'post_excerpt' );
+
+        foreach ( $fields as $field )
+        {
+            if ( !isset($postdata[$field]) || !is_string($postdata[$field]) )
+            {
+                continue;
+            }
+
+            // Use native Unicode normalization if available.
+            if ( class_exists( 'Normalizer' ) )
+            {
+                $normalized = \Normalizer::normalize( $postdata[$field], \Normalizer::FORM_KC );
+
+                if ( $normalized !== false )
+                {
+                    $postdata[$field] = $normalized;
+                    continue;
+                }
+            }
+
+            // Fallback for installations without the intl extension.
+            $bold = '𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭'
+                  . '𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇'
+                  . '𝟬𝟭𝟮𝟯𝟰𝟱𝟲𝟳𝟴𝟵';
+
+            $normal = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                    . 'abcdefghijklmnopqrstuvwxyz'
+                    . '0123456789';
+
+            $postdata[$field] = str_replace(
+                preg_split( '//u', $bold, -1, PREG_SPLIT_NO_EMPTY ),
+                str_split( $normal ),
+                $postdata[$field]
+            );
+        }
+
+        return $postdata;
     }
 
     public function output_import_data_meta_box( $post )
